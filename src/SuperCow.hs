@@ -15,42 +15,39 @@ runSuperCow = do
     bgColor = white   -- цвет фона
     fps     = 60      -- кол-во кадров в секунду
 
--- =========================================
+
 -- Модель игровой вселенной
--- =========================================
-
--- | Высота объектов
+-- Высота и Положение объектов
 type Height = Float
-
--- | Положение объектов по горизонтали
 type Offset = Float
 
--- | Вид птицы
-type Race = Int
+-- Объекты
+-- Птичка
+data Bird = Grey Offset Height | Blue Offset Height
+-- Клевер
+data Clover = Clover Offset Height
+-- Корова
+data Cow = Cow
+  { cowHeight :: Height  -- Положение коровы по вертикали
+  , cowOffset :: Offset   -- Положение коровы по горизонтали
+  }
 
--- | Параматры птицы
-type Bird = (Offset, Height, Race)
-
--- | Счёт
+-- Счёт
 type Score = Int
 
--- | Корова
-data Cow = Cow
-  { cowHeight :: Height  -- ^ Положение коровы по вертикали
-  , cowOffset  :: Float   -- ^ Положение коровы по горизонтали
-  }
-
--- | Модель игровой вселенной
+-- Модель игровой вселенной
 data Universe = Universe
-  { universeBirds   :: [Bird]   -- ^ Птички игровой вселенной
-  , universeCow  :: Cow   -- ^ Корова
-  , universeScore   :: Score    -- ^ Счёт (кол-во успешно пройденных птичек)
+  { universeBirds     :: [Bird]   -- Птички игровой вселенной
+  , universeСlovers   :: [Clover]   -- Клеверы игровой вселенной
+  , universeCow       :: Cow   -- Корова
+  , universeScore     :: Score    --  Cчет
   }
 
--- | Инициализировать игровую вселенную, используя генератор случайных значений
+-- Инициализировать игровую вселенную, используя генератор случайных значений
 initUniverse :: StdGen -> Universe
 initUniverse g = Universe
   { universeBirds  = initBirds g
+  , universeClovers  = initClovers g
   , universeCow = initCow
   , universeScore  = 0
   }
@@ -59,141 +56,137 @@ initUniverse g = Universe
 initCow :: Cow
 initCow = Cow
   { cowHeight = 0
-  , cowOffset  = 0
+  , cowOffset  = cowInitOffset
   }
 
--- | Инициализировать одну птичку
+-- Инициализировать одну птичку
 initBird :: Height -> Bird
 
--- | Инициализировать случайный бесконечный
+-- Инициализировать случайный бесконечный
 -- список птичек для игровой вселенной
 initBirds :: StdGen -> [Bird]
 
--- | Рассчитать абсолютное положение птичек
+-- Рассчитать абсолютное положение клевера
 absoluteBirds :: [Bird] -> [Bird]
 
--- =========================================
--- Отрисовка игровой вселенной
--- =========================================
+-- Инициализировать одну птичку
+initClover :: Height -> Clover
 
--- | Отобразить игровую вселенную
+-- Инициализировать случайный бесконечный
+-- список клеверов для игровой вселенной
+initClovers :: StdGen -> [Clover]
+
+-- Рассчитать абсолютное положение клевера
+absoluteClovers :: [Clover] -> [Clover]
+
+
+-- Отрисовка игровой вселенной
+-- Отобразить игровую вселенную
 drawUniverse :: Universe -> Picture
 
--- | Отобразить всех птиц игровой вселенной, вмещающихся в экран
-drawBirds :: [Birds] -> Picture
+-- Отобразить всех птиц игровой вселенной, вмещающихся в экран
+drawBirds :: [Bird] -> Picture
 
--- | Нарисовать одну птичку
+-- Нарисовать одну птичку
 drawBird :: Bird -> Picture
 
--- | Нарисовать корову
+-- Отобразить всех клеверов игровой вселенной, вмещающихся в экран
+drawClovers :: [Clover] -> Picture
+
+-- Нарисовать одну птичку
+drawClover :: Clover -> Picture
+
+-- Нарисовать корову
 drawCow :: Cow -> Picture
 
--- | Нарисовать счёт в левом верхнем углу экрана
+-- Нарисовать счёт в левом верхнем углу экрана
 drawScore :: Score -> Picture
 
--- | Многоугольники, определяющие корову
+-- не нужно наерное, если картинку грузить
+-- Многоугольники, определяющие корову
 cowPolygons :: Cow -> [Path]
 
--- | Многоугольники птичек
+-- Многоугольники птичек
 birdBoxes :: Bird -> [(Point, Point)]
 
--- =========================================
+
 -- Обработка событий
--- =========================================
+-- Обработчик событий игры
+handleUniverse :: Event -> Universe -> Universe
 
--- | Обработчик событий игры
-handleUniverse :: Event -> Universe -> 
+-- Изменить положение коровы, если можно
+moveCow :: Universe -> Universe
 
--- | Подпрыгнуть, если можно
-bumpCow :: Universe -> Universe
 
--- =========================================
 -- Обновление игровой вселенной
--- =========================================
-
--- | Обновить состояние игровой вселенной
+-- Обновить состояние игровой вселенной
 updateUniverse :: Float -> Universe -> Universe
 
--- | Обновить состояние коровы
--- Корова не может прыгнуть выше потолка
+-- Обновить состояние коровы
+-- Корова не может двигаться дальше, чем края вселенной
 updateCow :: Float -> Cow -> Cow
-updateCow dt cow = cow
-  { cowHeight = min h (cowHeight cow + dt * cowOffset cow)
-  , cowOffset  = cowOffset cow + dt * gravity
-  }
-  where
-    h = fromIntegral screenHeight / 2
 
--- | Обновить птичек игровой вселенной
+-- Обновить птичек игровой вселенной
 updateBirds :: Float -> [Bird] -> [Bird]
 
--- | Сбросить игру (начать с начала со случайными птичками)
-resetUniverse :: Universe -> Universe
-resetUniverse u = u
-  { universeBirds  = tail (universeBirds u)
-  , universeCow = initCow
-  , universeScore  = 0
-  }
+-- Обновить клеверы игровой вселенной
+updateClovers :: Float -> [Bird] -> [Bird]
 
--- | Конец игры?
-isGameOver :: Universe -> Bool
 
--- | Сталкивается ли корова с любыми из
--- бесконечного списка птичек?
-collision :: Cow -> [Bird] -> Bool
+-- Сталкивается ли корова с любыми птичками
+collisionBird :: Cow -> [Bird] -> Bool
+-- Сталкивается ли корова с любыми птичками
+collisionClover :: Cow -> [Clover] -> Bool
 
--- | Сталкивается ли корова с птичками?
+-- Сталкивается ли корова с птичками?
 collides :: Cow -> Bird -> Bool
-collides cow bird = or
-  [ polygonBoxCollides polygon box
-  | polygon <- cowPolygons cow
-  , box     <- birdBoxes bird ]
 
--- | Упрощённая проверка на пересечение многоугольников
+-- Сталкивается ли корова с клеверами?
+collides :: Cow -> Bird -> Bool
+
+-- Упрощённая проверка на пересечение многоугольников
 polygonBoxCollides :: Path -> (Point, Point) -> Bool
-polygonBoxCollides xs (lb, rt) = or
-  [ not (segClearsBox p1 p2 lb rt)
-  | (p1, p2) <- zip xs (tail (cycle xs)) ]
 
--- =========================================
 -- Константы, параметры игры
--- =========================================
-
--- | Ширина экрана
+-- Ширина экрана
 screenWidth :: Int
 screenWidth = 800
 
--- | Высота экрана
+-- Высота экрана
 screenHeight :: Int
 screenHeight = 450
 
--- | Положение правого края экрана
+-- Положение правого края экрана
 screenRight :: Offset
 screenRight = fromIntegral screenWidth / 2
 
--- | Положение левого края экрана
+-- Положение левого края экрана
 screenLeft :: Offset
 screenLeft = - fromIntegral screenWidth / 2
 
--- | Ширина стенок ворот
-birdWidth :: Float
-birdWidth = 40
+-- Положение верхнего края экрана
+screenTop :: Height
+screenTop = fromIntegral screenHeight / 2
 
--- | Размер проёма ворот
-birdSize :: Float
-birdSize = 150
+-- Положение нижнего края экрана
+screenBottom :: Height
+screenBottom = - fromIntegral screenHeight / 2
 
--- | Расстояние между птичками
+-- Расстояние между птичками и клеверами
 defaultOffset :: Offset
 defaultOffset = 300
 
--- | Диапазон высот птиц
+-- Диапазон высот птиц
 birdHeightRange :: (Height, Height)
 
--- | Скорость движения игрока по вселенной (в пикселях в секунду).
+-- Скорость движения игрока по вселенной (в пикселях в секунду).
 offset :: Float
 offset = 100
 
--- | Положение коровы по горизонтали
-cowOffset :: Offset
-cowOffset = screenLeft + 200
+-- Положение коровы по горизонтали
+cowInitOffset :: Offset
+cowInitOffset = screenLeft + 100
+
+-- Положение коровы по вертикали
+cowInitTop :: Height
+cowInitTop = screenBottom + 200
