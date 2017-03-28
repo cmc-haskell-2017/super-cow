@@ -16,7 +16,7 @@ runSuperCow = do
     fps     = 60      -- кол-во кадров в секунду
 
 
--- Модель игровой вселенной
+-- Структуры данных
 -- Высота и Положение объектов
 type Height = Float -- Высота обьекта
 type Offset = Float -- Сдвиг обьекта
@@ -32,7 +32,7 @@ data Obstacle = Clover Position | -- Клевер - добавляет одну 
 -- Корова
 data Cow = Cow Position
 
--- Модель игровой вселенной
+-- Игровая вселенная
 data Universe = Universe
   { universeObstacles     :: [Obstacle]   -- Препятствия игровой вселенной
   , universeCow       :: Cow   -- Корова
@@ -40,36 +40,39 @@ data Universe = Universe
   , universeLife     :: Life    --  Жизни
   }
 
+
+-- Инициализация вселенной
 -- Инициализировать игровую вселенную, используя генератор случайных значений
 initUniverse :: StdGen -> Universe
 initUniverse g = Universe
-  { universeObstacles  = initObstacles g
+  { universeObstacles  = initObstacles g 
   , universeCow = initCow
   , universeScore  = 0
   , universeLife  = 3
   }
 
--- | Начальное состояние коровы
+-- Инициализировать корову
 initCow :: Cow
-initCow = Cow 0 cowInitOffset
+initCow = Cow cowInitHeight cowInitOffset
 
 -- Инициализировать одно препятствие
-initGoodBird :: Position -> Obstacle
-initBadBird :: Position -> Obstacle
-initClover :: Position -> Obstacle
+initGoodBird :: Position -> Obstacle -- хорошая птичка
+initBadBird :: Position -> Obstacle -- птичка птичка
+initClover :: Position -> Obstacle -- клевер
 
 -- Инициализировать случайный бесконечный список препятствий
 initObstacles :: StdGen -> [Obstacle]
+
 
 -- Отрисовка игровой вселенной
 -- Отобразить игровую вселенную
 drawUniverse :: Universe -> Picture
 
 -- Отобразить все препятствия игровой вселенной, вмещающихся в экран
-drawObstacles :: [Obstacles] -> Picture
+drawObstacles :: [Obstacle] -> Picture
 
 -- Оставить только те препятствия, которые входят в экран
-cropObstaclesInsideScreen :: [Obstacles] -> [Obstacles]
+cropObstaclesInsideScreen :: [Obstacle] -> [Obstacle]
 
 -- Нарисовать одно препятствие
 drawObstacle :: Obstacle -> Picture
@@ -83,20 +86,21 @@ drawScore :: Score -> Picture
 -- Нарисовать счёт в левом верхнем углу экрана
 drawLife :: Life -> Picture
 
+
 -- Обработка событий
 -- Обработчик событий игры
 handleUniverse :: Event -> Universe -> Universe
 
--- Изменить положение коровы, если можно
-moveCow :: Universe -> Universe
 
 -- Обновление игровой вселенной
 -- Обновить состояние игровой вселенной
 updateUniverse :: Float -> Universe -> Universe
 
 -- Обновить состояние коровы
--- Корова не может двигаться дальше, чем края вселенной
 updateCow :: Float -> Cow -> Cow
+
+-- Изменить положение коровы, если можно
+moveCow :: Universe -> Universe
 
 -- Обновить препятствия игровой вселенной
 updateObstacles :: Float -> [Bird] -> [Bird]
@@ -110,8 +114,12 @@ updateLife :: Float -> Life -> Life
 -- Сталкивается ли корова с любыми препятствиями
 collisionObstacle :: Cow -> [Obstacle] -> Bool
 
--- Сталкивается ли корова с птичками?
+-- Сталкивается ли корова с препятствием?
 collides :: Cow -> Obstacle -> Bool
+
+-- Текущая скорость движения игрока по вселенной (троится по времени и изначальной скорости)
+сurrentSpeed :: Float -> Float -> Float
+
 
 -- Константы, параметры игры
 -- Ширина экрана
@@ -142,12 +150,10 @@ screenBottom = - fromIntegral screenHeight / 2
 defaultOffset :: Offset
 defaultOffset = 300
 
-changeOffset :: Offset -> Offset
-
 -- Диапазон высот препятствий
 ObstacleHeightRange :: (Height, Height)
 
--- Скорость движения игрока по вселенной (в пикселях в секунду).
+-- Изначальная скорость движения игрока по вселенной (в пикселях в секунду).
 speed :: Float
 speed = 100
 
@@ -156,5 +162,5 @@ cowInitOffset :: Offset
 cowInitOffset = screenLeft + 100
 
 -- Положение коровы по вертикали
-cowInitTop :: Height
-cowInitTop = screenBottom + 200
+cowInitHeight :: Height
+cowInitHeight = screenBottom + 200
