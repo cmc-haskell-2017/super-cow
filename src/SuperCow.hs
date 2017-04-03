@@ -5,7 +5,7 @@ import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Graphics.Gloss.Interface.Pure.Game
 
--- | Запустить игру «Flappy Lambda»
+-- | Запустить игру «Super Cow»
 runSuperCow :: IO ()
 runSuperCow = do
   g <- newStdGen
