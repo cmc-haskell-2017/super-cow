@@ -26,18 +26,18 @@ type Score = Int -- Счет (изменяется постоянно)
 
 -- Объекты игровой вселенной
 data Clover = Clover  -- Клевер - добавляет одну жизнь
-  { position :: Position
-  , size :: Float
+  { cloverPosition :: Position
+  , cloverSize :: Float
   }
      
 data BadBird = BadBird -- Плохая птичка - снимает 2 жизни 
-  { position :: Position
-  , size     :: Float
+  { badBirdPosition :: Position
+  , badBirdSize     :: Float
   }
   
 data GoodBird = GoodBird -- Хорошая птичка - снимает 1 жизни
-  { position :: Position
-  , size     :: Float
+  { goodBirdPosition :: Position
+  , goodBirdSize     :: Float
   }
   
 data Map = Map 
@@ -47,7 +47,10 @@ data Map = Map
   }
 
 -- Корова
-data Cow = Cow Position
+data Cow = Cow
+  { cowPosition :: Position
+  , cowSize     :: Float
+  }
 
 -- Игровая вселенная
 data Universe = Universe
@@ -74,60 +77,79 @@ class Obstacle o where
     draw :: Picture -> o -> Picture
     -- Сталкивается ли корова с препятствием? (Денис)
     collides :: Cow -> o -> Bool
-
+    -- Получение позиции
+    getPosition :: o -> Position
+    -- Получние размера
+    getSize :: o -> Float
+    
     
 instance Obstacle Clover where    
     draw image clover = translate x y (scale r r image)
         where
-            (x, y) = position clover
-            r = size clover
+            (x, y) = cloverPosition clover
+            r = cloverSize clover
             
     collides (Cow (x1,y1)) clover 
         | x1 == x2 && y1 == y2 = True
         | otherwise = False
         where
-            (x2,y2) = position clover
+            (x2,y2) = cloverPosition clover
+    
+    getPosition clover = cloverPosition clover
+    
+    getSize clover = cloverSize clover
     
 instance Obstacle BadBird where
     draw image badbird = translate x y (scale r r image)
         where
-            (x, y) = position badbird
-            r = size badbird
+            (x, y) = badBirdPosition badbird
+            r = badBirdSize badbird
     
     collides (Cow (x1,y1)) badbird 
         | x1 == x2 && y1 == y2 = True
         | otherwise = False
         where
-            (x2,y2) = position badbird
+            (x2,y2) = badBirdPosition badbird
+        
+    getPosition badbird = badBirdPosition badbird
+    
+    getSize badbird = badBirdSize badbird
         
 instance Obstacle GoodBird where 
     draw image goodbird = translate x y (scale r r image)
         where
-            (x, y) = position goodbird
-            r = size goodbird
+            (x, y) = goodBirdPosition goodbird
+            r = goodBirdSize goodbird
     
     collides (Cow (x1,y1)) goodbird 
         | x1 == x2 && y1 == y2 = True
         | otherwise = False
         where
-            (x2,y2) = position goodbird
+            (x2,y2) = goodBirdPosition goodbird
+            
+    getPosition goodbird = goodBirdPosition goodbird
+    
+    getSize goodbird = goodBirdSize goodbird
 
 -- Инициализировать клевер
+initClover :: Position -> Clover
 initClover p = Clover 
-    { position = p
-    , size = defaultCloverSize
+    { cloverPosition = p
+    , cloverSize = defaultCloverSize
     }
 
 -- Инициализировать плохую птичку 
+initBadBird :: Position -> BadBird
 initBadBird p = BadBird
-    { position = p 
-    , size = defaultBadBirdSize
+    { badBirdPosition = p 
+    , badBirdSize = defaultBadBirdSize
     }
     
 -- Инициализировать хорошую птичку
+initGoodBird :: Position -> GoodBird
 initGoodBird p = GoodBird
-    { position = p 
-    , size = defaultGoodBirdSize
+    { goodBirdPosition = p 
+    , goodBirdSize = defaultGoodBirdSize
     }
 
 -- Инициализировать карту препятствий (Дана)
@@ -138,7 +160,10 @@ initObstacles :: Obstacle o => StdGen -> [o]
 
 -- Инициализировать корову (Дана)
 initCow :: Cow
-initCow = Cow cowInitHeight cowInitOffset
+initCow = Cow 
+    { cowPosition = (cowInitHeight, cowInitOffset)
+    , cowSize = defaultCowSize
+    }
 
 -- Отрисовка игровой вселенной
 -- Отобразить игровую вселенную (Ралина)
@@ -231,12 +256,15 @@ defaultBadBirdSize = 1
 defaultGoodBirdSize :: Float
 defaultGoodBirdSize = 1
 
+defaultCowSize :: Float
+defaultCowSize = 1
+
 -- Диапазон высот препятствий
 obstacleHeightRange :: (Height, Height)
-
+obstacleHeightRange = (0,0)
 -- Изначальная скорость движения игрока по вселенной (в пикселях в секунду).
-speed :: Float
-speed = 100
+gameSpeed :: Float
+gameSpeed = 100
 
 -- Положение коровы по горизонтали
 cowInitOffset :: Offset
