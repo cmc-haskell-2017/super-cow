@@ -25,19 +25,36 @@ type Life = Int -- Жизни (изначально 3)
 type Score = Int -- Счет (изменяется постоянно)
 
 -- Объекты игровой вселенной
-data Obstacle = Clover Position | -- Клевер - добавляет одну жизнь
-    BadBird Position | -- Плохая птичка - снимает 2 жизни 
-    GoodBird Position -- Хорошая птичка - снимает 1 жизни
+data Clover = Clover  -- Клевер - добавляет одну жизнь
+  { position :: Position
+  , size :: Float
+  }
+     
+data BadBird = BadBird -- Плохая птичка - снимает 2 жизни 
+  { position :: Position
+  , size     :: Float
+  }
+  
+data GoodBird = GoodBird -- Хорошая птичка - снимает 1 жизни
+  { position :: Position
+  , size     :: Float
+  }
+  
+data Map = Map 
+  { mapGoodBirds :: [GoodBird]
+  , mapBadBirds  :: [BadBird]
+  , mapClovers   :: [Clover]
+  }
 
 -- Корова
 data Cow = Cow Position
 
 -- Игровая вселенная
 data Universe = Universe
-  { universeObstacles     :: [Obstacle]   -- Препятствия игровой вселенной
+  { universeMap       :: Map   -- Препятствия игровой вселенной
   , universeCow       :: Cow   -- Корова
   , universeScore     :: Score    --  Cчет
-  , universeLife     :: Life    --  Жизни
+  , universeLife      :: Life    --  Жизни
   }
 
 
@@ -51,31 +68,77 @@ initUniverse g = Universe
   , universeLife  = 3
   }
 
+-- Реализация препятствий
+class Obstacle o where 
+    -- Инициализировать одно препятствие
+    init :: Position -> o
+    -- Нарисовать одно препятствие (Ралина)
+    draw :: Picture -> o -> Picture
+    -- Сталкивается ли корова с препятствием? (Денис)
+    collides :: Cow -> o -> Bool
+
+    
+instance Obstacle Clover where
+    init p = Clover 
+    { position = p
+    , size = defaultCloverSize
+    }
+    
+    draw image clover = translate x y (scale r r image)
+        where
+            (x, y) = position clover
+            r = size clover
+            
+    collides (Cow (x1,y1)) clover 
+        | x1 == x2 && y1 == y2 = True
+        | otherwise = False
+        where
+            (x2,y2) = position clover
+    
+instance Obstacle BadBird where
+    init p = BadBird
+    { position = p 
+    , size = defaultBadBirdSize
+    }
+    
+    draw image badbird = translate x y (scale r r image)
+        where
+            (x, y) = position badbird
+            r = size badbird
+    
+    collides (Cow (x1,y1)) badbird 
+        | x1 == x2 && y1 == y2 = True
+        | otherwise = False
+        where
+            (x2,y2) = position badbird
+        
+instance Obstacle GoodBird where 
+    init p = GoodBird
+    { position = p 
+    , size = defaultGoodBirdSize
+    }
+    
+    draw image goodbird = translate x y (scale r r image)
+        where
+            (x, y) = position goodbird
+            r = size goodbird
+    
+    collides (Cow (x1,y1)) goodbird 
+        | x1 == x2 && y1 == y2 = True
+        | otherwise = False
+        where
+            (x2,y2) = position goodbird
+
+-- Инициализировать случайный бесконечный список препятствий (Дана)
+initObstacles :: Obstacle o => StdGen -> [o]
+
 -- Инициализировать корову (Дана)
 initCow :: Cow
 initCow = Cow cowInitHeight cowInitOffset
 
--- Инициализировать одно препятствие (Дана)
-initGoodBird :: Position -> Obstacle -- хорошая птичка
-initBadBird :: Position -> Obstacle -- птичка птичка
-initClover :: Position -> Obstacle -- клевер
-
--- Инициализировать случайный бесконечный список препятствий (Дана)
-initObstacles :: StdGen -> [Obstacle]
-
-
 -- Отрисовка игровой вселенной
 -- Отобразить игровую вселенную (Ралина)
 drawUniverse :: Universe -> Picture
-
--- Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
-drawObstacles :: [Obstacle] -> Picture
-
--- Оставить только те препятствия, которые входят в экран (-)
-cropObstaclesInsideScreen :: [Obstacle] -> [Obstacle]
-
--- Нарисовать одно препятствие (Ралина)
-drawObstacle :: Obstacle -> Picture
 
 -- Нарисовать корову (Ралина)
 drawCow :: Cow -> Picture
@@ -86,12 +149,20 @@ drawScore :: Score -> Picture
 -- Нарисовать счёт в левом верхнем углу экрана (Ралина)
 drawLife :: Life -> Picture
 
+-- Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
+drawObstacles :: Obstacle o => [o] -> Picture
+
+-- Оставить только те препятствия, которые входят в экран 
+cropInsideScreen :: Obstacle o => [o] -> [o]
 
 -- Обработка событий (-)
 -- Обработчик событий игры
 handleUniverse :: Event -> Universe -> Universe
 
-
+-- Сталкивается ли корова с любыми препятствиями (Денис 
+collisionMulti :: Obstacle o => Cow -> [o] -> Bool
+collisionMulti cow os = foldr1 (&&) (map (collides cow) (cropInsideScreen os)) 
+    
 -- Обновление игровой вселенной
 -- Обновить состояние игровой вселенной (Валера)
 updateUniverse :: Float -> Universe -> Universe
@@ -102,20 +173,17 @@ updateCow :: Float -> Cow -> Cow
 -- Изменить положение коровы, если можно (Дана)
 moveCow :: Universe -> Universe
 
+-- Обновить карту игровой вселенной (Валера)
+updateMap :: Float -> Map -> Map
+
 -- Обновить препятствия игровой вселенной (Валера)
-updateObstacles :: Float -> [Obstacle] -> [Obstacle]
+updateObstacles :: Obstacle o => Float -> [o] -> [o]
 
 -- Обновить счет (Валера)
 updateScore :: Float -> Score -> Score
 
 -- Обновить жизни (Валера)
 updateLife :: Float -> Life -> Life
-
--- Сталкивается ли корова с любыми препятствиями (Денис)
-collisionObstacle :: Cow -> [Obstacle] -> Bool
-
--- Сталкивается ли корова с препятствием? (Денис)
-collides :: Cow -> Obstacle -> Bool
 
 -- Текущая скорость движения игрока по вселенной (троится по времени и изначальной скорости)
 сurrentSpeed :: Float -> Float -> Float
@@ -149,6 +217,15 @@ screenBottom = - fromIntegral screenHeight / 2
 -- Расстояние между препятствиями
 defaultOffset :: Offset
 defaultOffset = 300
+
+defaultCloverSize :: Float
+defaultCloverSize = 1
+
+defaultBadBirdSize :: Float
+defaultBadBirdSize = 1
+
+defaultGoodBirdSize :: Float
+defaultGoodBirdSize = 1
 
 -- Диапазон высот препятствий
 ObstacleHeightRange :: (Height, Height)
