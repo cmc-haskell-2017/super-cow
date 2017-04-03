@@ -62,7 +62,7 @@ data Universe = Universe
 -- Инициализировать игровую вселенную, используя генератор случайных значений
 initUniverse :: StdGen -> Universe
 initUniverse g = Universe
-  { universeObstacles  = initObstacles g 
+  { universeMap  = initMap g 
   , universeCow = initCow
   , universeScore  = 0
   , universeLife  = 3
@@ -70,20 +70,13 @@ initUniverse g = Universe
 
 -- Реализация препятствий
 class Obstacle o where 
-    -- Инициализировать одно препятствие
-    init :: Position -> o
     -- Нарисовать одно препятствие (Ралина)
     draw :: Picture -> o -> Picture
     -- Сталкивается ли корова с препятствием? (Денис)
     collides :: Cow -> o -> Bool
 
     
-instance Obstacle Clover where
-    init p = Clover 
-    { position = p
-    , size = defaultCloverSize
-    }
-    
+instance Obstacle Clover where    
     draw image clover = translate x y (scale r r image)
         where
             (x, y) = position clover
@@ -96,11 +89,6 @@ instance Obstacle Clover where
             (x2,y2) = position clover
     
 instance Obstacle BadBird where
-    init p = BadBird
-    { position = p 
-    , size = defaultBadBirdSize
-    }
-    
     draw image badbird = translate x y (scale r r image)
         where
             (x, y) = position badbird
@@ -113,11 +101,6 @@ instance Obstacle BadBird where
             (x2,y2) = position badbird
         
 instance Obstacle GoodBird where 
-    init p = GoodBird
-    { position = p 
-    , size = defaultGoodBirdSize
-    }
-    
     draw image goodbird = translate x y (scale r r image)
         where
             (x, y) = position goodbird
@@ -128,6 +111,27 @@ instance Obstacle GoodBird where
         | otherwise = False
         where
             (x2,y2) = position goodbird
+
+-- Инициализировать клевер
+initClover p = Clover 
+    { position = p
+    , size = defaultCloverSize
+    }
+
+-- Инициализировать плохую птичку 
+initBadBird p = BadBird
+    { position = p 
+    , size = defaultBadBirdSize
+    }
+    
+-- Инициализировать хорошую птичку
+initGoodBird p = GoodBird
+    { position = p 
+    , size = defaultGoodBirdSize
+    }
+
+-- Инициализировать карту препятствий (Дана)
+initMap :: StdGen -> Map
 
 -- Инициализировать случайный бесконечный список препятствий (Дана)
 initObstacles :: Obstacle o => StdGen -> [o]
@@ -228,7 +232,7 @@ defaultGoodBirdSize :: Float
 defaultGoodBirdSize = 1
 
 -- Диапазон высот препятствий
-ObstacleHeightRange :: (Height, Height)
+obstacleHeightRange :: (Height, Height)
 
 -- Изначальная скорость движения игрока по вселенной (в пикселях в секунду).
 speed :: Float

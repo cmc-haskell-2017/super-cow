@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import SuperCow
 
 {-# OPTIONS_GHC -Wall #-}
 
