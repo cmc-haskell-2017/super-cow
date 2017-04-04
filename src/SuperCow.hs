@@ -103,7 +103,7 @@ data Images = Images
 -- | Отобразить игровую вселенную (Ралина)
 drawUniverse :: Images -> Universe -> Picture
 drawUniverse images u = pictures
-  [ drawBackground images imageSkyWithGrass
+  [ drawBackground (imageSkyWithGrass images)
   , drawObstacles images (universeMap u)
   , drawCow (imageCow images) (universeCow u)
   , drawScore (universeScore u)
@@ -112,7 +112,7 @@ drawUniverse images u = pictures
 
 -- | Отобразить фон
 drawBackground :: Picture -> Picture
-drawBackground image = translate -w h (scale 1.0 1.0 image)
+drawBackground image = translate (-w) h (scale 1.0 1.0 image)
   where 
     w = fromIntegral screenWidth  / 2
     h = fromIntegral screenHeight / 2
