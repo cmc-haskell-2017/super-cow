@@ -5,15 +5,36 @@ import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Graphics.Gloss.Interface.Pure.Game
 
--- | Запустить игру «Flappy Lambda»
-runSuperCow :: IO ()
-runSuperCow = do
+-- | Запустить игру «Super Cow»
+runSuperCow :: Images -> IO ()
+runSuperCow images = do
   g <- newStdGen
-  play display bgColor fps (initUniverse g) drawUniverse handleUniverse updateUniverse
+  play display bgColor fps (initUniverse g) (drawUniverse images) handleUniverse updateUniverse
   where
     display = InWindow "Super Cow" (screenWidth, screenHeight) (200, 200)
     bgColor = white   -- цвет фона
     fps     = 60      -- кол-во кадров в секунду
+
+-- Загрузка изображений
+loadImages :: IO Images
+loadImages = do
+  Just cow   <- loadJuicyPNG "images/cow.png"
+  Just clover  <- loadJuicyPNG "images/clover.png"
+  Just good_bird_up  <- loadJuicyPNG "images/GrayBirdUp.png"
+  Just good_bird_down  <- loadJuicyPNG "images/GrayBirdDown.png"
+  Just bad_bird_up  <- loadJuicyPNG "images/BlueBirdUp.png"
+  Just bad_bird_down  <- loadJuicyPNG "images/BlueBirdDown.png"
+  Just sky_with_grass  <- loadJuicyPNG "images/SkyWithGrass.png"
+
+  return Images
+    { imageCow   = scale 0.1 0.1 cow
+    , imageClover  = scale 0.1 0.1 clover
+    , imageGoodBirdUp = scale 0.1 0.1 good_bird_up
+    , imageGoodBirdDown = scale 0.1 0.1 good_bird_down
+    , imageBadBirdUp = scale 0.1 0.1 bad_bird_up
+    , imageBadBirdDown = scale 0.1 0.1 bad_bird_down
+    , imageSkyWithGrass = scale 1.0 1.0 sky_with_grass
+    }
 
 
 -- Структуры данных
@@ -39,6 +60,72 @@ data Universe = Universe
   , universeScore     :: Score    --  Cчет
   , universeLife     :: Life    --  Жизни
   }
+-- Изображения объектов
+data Images = Images
+  { imageCow  :: Picture   -- ^ Изображение коровы.
+  , imageClover :: Picture   -- ^ Изображение клевера
+  , imageGoodBirdUp       :: Picture   -- ^ Изображение GrayBirdUp.
+  , imageGoodBirdDown       :: Picture   -- ^ Изображение GrayBirdDown.
+  , imageBadBirdUp       :: Picture   -- ^ Изображение BlueBirdUp.
+  , imageBadBirdDown       :: Picture   -- ^ Изображение BlueBirdDown.
+  , imageSkyWithGrass       :: Picture   -- ^ Изображение Неба.
+  }
+
+
+-- Отрисовка игровой вселенной
+-- Отобразить игровую вселенную (Ралина)
+drawUniverse :: Images -> Universe -> Picture
+drawUniverse images u = pictures
+  [ drawObstacles images (universeMap u)
+  , drawCow (imageCow images) (universeCow u)
+  , drawScore (universeScore u)
+  , drawLife (universeLife u)
+  ]
+
+-- Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
+drawObstacles :: Images -> Map -> Picture
+drawObstacles images obstacles = pictures
+  [ pictures (map (draw  (imageGoodBirdUp  images)) (mapGoodBirds  obstacles))
+  , pictures (map (draw (imageBadBirdUp images)) (mapBadBirds obstacles))
+  , pictures (map (draw (imageClover  images)) (mapClovers obstacles))
+  ]
+
+-- Оставить только те препятствия, которые входят в экран (-)
+cropObstaclesInsideScreen :: [Obstacle] -> [Obstacle]
+
+
+-- Нарисовать корову (Ралина)
+drawCow :: Picture -> Cow -> Picture
+drawCow image cow = translate x y (scale r r image)
+  where
+    (x, y) = position cow
+    r = size cow
+
+-- Нарисовать счёт в левом верхнем углу экрана (Ралина)
+drawScore :: Score -> Picture
+drawScore score = translate (-w) h (scale 30 30 (pictures
+  [ 
+  -- color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- белая рамка
+  -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])    -- чёрные внутренности
+  -- , 
+  translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show score))))  -- красный счёт
+  ]))
+  where
+    w = fromIntegral screenWidth  / 2
+    h = fromIntegral screenHeight / 2
+
+-- Нарисовать жизни в правом верхнем углу экрана (Ралина)
+drawLife :: Life -> Picture
+drawLife life = translate w h (scale 30 30 (pictures
+  [ --color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- белая рамка
+  -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])    -- чёрные внутренности
+  -- , 
+  translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show life))))  -- красная жизнь
+  ]))
+  where
+    w = fromIntegral screenWidth  / 2
+    h = fromIntegral screenHeight / 2
+
 
 
 -- Инициализация вселенной (Дана)
@@ -64,27 +151,6 @@ initClover :: Position -> Obstacle -- клевер
 initObstacles :: StdGen -> [Obstacle]
 
 
--- Отрисовка игровой вселенной
--- Отобразить игровую вселенную (Ралина)
-drawUniverse :: Universe -> Picture
-
--- Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
-drawObstacles :: [Obstacle] -> Picture
-
--- Оставить только те препятствия, которые входят в экран (-)
-cropObstaclesInsideScreen :: [Obstacle] -> [Obstacle]
-
--- Нарисовать одно препятствие (Ралина)
-drawObstacle :: Obstacle -> Picture
-
--- Нарисовать корову (Ралина)
-drawCow :: Cow -> Picture
-
--- Нарисовать счёт в левом верхнем углу экрана (Ралина)
-drawScore :: Score -> Picture
-
--- Нарисовать счёт в левом верхнем углу экрана (Ралина)
-drawLife :: Life -> Picture
 
 
 -- Обработка событий (-)
