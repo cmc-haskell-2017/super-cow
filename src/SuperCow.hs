@@ -4,6 +4,7 @@ import System.Random
 import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Graphics.Gloss.Interface.Pure.Game
+import Graphics.Gloss.Juicy
 
 -- | Запустить игру «Super Cow»
 runSuperCow :: Images -> IO ()
@@ -82,7 +83,7 @@ data Cow = Cow
 data Universe = Universe
   { universeMap       :: Map   -- ^ Препятствия игровой вселенной
   , universeCow       :: Cow   -- ^ Корова
-  , universeScore     :: Scor  -- ^ Cчет
+  , universeScore     :: Score  -- ^ Cчет
   , universeLife      :: Life  -- ^ Жизни
   }
   
@@ -102,7 +103,7 @@ data Images = Images
 -- | Отобразить игровую вселенную (Ралина)
 drawUniverse :: Images -> Universe -> Picture
 drawUniverse images u = pictures
-  [ drawBackground imageSkyWithGrass
+  [ drawBackground images imageSkyWithGrass
   , drawObstacles images (universeMap u)
   , drawCow (imageCow images) (universeCow u)
   , drawScore (universeScore u)
@@ -176,7 +177,7 @@ class Obstacle o where
     -- | Получение позиции препятствия
     getPosition :: o -> Position
     -- | Получние размера препятствия
-    getSize :: o -> Float
+    getSize :: o -> Size
     -- | Обновление препятствия
     update :: o -> Position -> Size -> o
     
@@ -270,8 +271,8 @@ initGoodBird p = GoodBird
 initMap :: StdGen -> Map
 initMap g = Map 
   { mapGoodBirds = map initGoodBirdBird positions_1
-    , mapClovers = map initClover positions_2
-    , mapBadBirds = map initBadBird positions_3
+  , mapClovers = map initClover positions_2
+  , mapBadBirds = map initBadBird positions_3
   }
   where
     positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
@@ -287,11 +288,14 @@ initCow = Cow
 
 -- | Оставить только те препятствия, которые входят в экран 
 cropInsideScreen :: Obstacle o => [o] -> [o]
+cropInsideScreen _ = []
 
 -- | Обработчик событий игры(Дана)
 handleUniverse :: Event -> Universe -> Universe
 handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = goUp
 handleUniverse (EventKey (SpecialKey KeySpace) Up _ _) = goDown
+handleUniverse (EventKey (SpecialKey KeySpace) Left _ _) = goLeft
+handleUniverse (EventKey (SpecialKey KeySpace) Right _ _) = goRight
 handleUniverse _ = id
 
 -- | Передвижение коровы вверх, если можно.
@@ -355,13 +359,13 @@ updateObstacles dt (obstacle : obstaclesTail)
   | dx > pos  = updateObstacles dt' obstaclesTail
   | otherwise = (update obstacle (coordX - dx, coordY) size) : obstaclesTail
   where
-    offset = (getPosition obstacle)
-    coordX = (fst offset)
-    coordY = (snd offset)
-    size = (getSize obstacle)
+    offset = getPosition obstacle
+    coordX = fst offset
+    coordY = snd offset
+    size = getSize obstacle
     pos = coordX - screenLeft + size
     dx  = dt * gameSpeed
-    dt' = dt - coordX / gameSpeed
+    dt' = dt - fromIntegral coordX / gameSpeed
 
 -- | Обновить счет (Валера)
 updateScore :: Float -> Score -> Score
@@ -370,7 +374,7 @@ updateScore _ score = score + 1
 
 -- | Обновить жизни (Валера)
 updateLife :: Float -> Universe -> Life
-updateLife dt u =
+updateLife dt u
   | collisionMulti cow (mapGoodBirds map) = life - 1
   | collisionMulti cow (mapBadBirds map) = life - 2
   | collisionMulti cow (mapClovers map) = life + 1
@@ -382,7 +386,7 @@ updateLife dt u =
 
 -- | Текущая скорость движения игрока по вселенной (троится по времени и изначальной скорости)
 сurrentSpeed :: Float -> Float
-currentSpeed t = gameSpeed + fromIntegral t / 1000
+сurrentSpeed t = gameSpeed + fromIntegral t / 1000
 
 -- | Константы, параметры игры
 -- | Ширина экрана
@@ -427,9 +431,7 @@ defaultCowSize = 1
 
 -- | Диапазон высот препятствий.
 obstacleHeightRange :: (Height, Height)
-obstacleHeightRange = (-h, h)
-  where
-    h = (fromIntegral screenHeight) / 2 --необходимо чекнуть
+obstacleHeightRange = (screenBottom, screenTop)
 
 -- | Изначальная скорость движения игрока по вселенной - абсолютное изменение 
 -- | изменение высоты игрока при нажатии на клавиши (в пикселях)
@@ -442,4 +444,4 @@ cowInitOffset = screenLeft + 100
 
 -- | Положение коровы по вертикали
 cowInitHeight :: Height
-cowInitHeight = screenBottom + 200
+cowInitHeight = 0
