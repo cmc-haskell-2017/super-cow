@@ -15,86 +15,91 @@ runSuperCow images = do
     bgColor = white   -- цвет фона
     fps     = 60      -- кол-во кадров в секунду
 
--- Загрузка изображений
+-- | Загрузка изображений
 loadImages :: IO Images
 loadImages = do
-  Just cow   <- loadJuicyPNG "images/cow.png"
-  Just clover  <- loadJuicyPNG "images/clover.png"
-  Just good_bird_up  <- loadJuicyPNG "images/GrayBirdUp.png"
-  Just good_bird_down  <- loadJuicyPNG "images/GrayBirdDown.png"
-  Just bad_bird_up  <- loadJuicyPNG "images/BlueBirdUp.png"
-  Just bad_bird_down  <- loadJuicyPNG "images/BlueBirdDown.png"
-  Just sky_with_grass  <- loadJuicyPNG "images/SkyWithGrass.png"
+  Just cow                <- loadJuicyPNG "images/cow.png"
+  Just clover             <- loadJuicyPNG "images/clover.png"
+  Just good_bird_up       <- loadJuicyPNG "images/GrayBirdUp.png"
+  Just good_bird_down     <- loadJuicyPNG "images/GrayBirdDown.png"
+  Just bad_bird_up        <- loadJuicyPNG "images/BlueBirdUp.png"
+  Just bad_bird_down      <- loadJuicyPNG "images/BlueBirdDown.png"
+  Just sky_with_grass     <- loadJuicyPNG "images/SkyWithGrass.png"
 
   return Images
-    { imageCow   = scale 0.1 0.1 cow
-    , imageClover  = scale 0.1 0.1 clover
-    , imageGoodBirdUp = scale 0.1 0.1 good_bird_up
+    { imageCow          = scale 0.1 0.1 cow
+    , imageClover       = scale 0.1 0.1 clover
+    , imageGoodBirdUp   = scale 0.1 0.1 good_bird_up
     , imageGoodBirdDown = scale 0.1 0.1 good_bird_down
-    , imageBadBirdUp = scale 0.1 0.1 bad_bird_up
-    , imageBadBirdDown = scale 0.1 0.1 bad_bird_down
+    , imageBadBirdUp    = scale 0.1 0.1 bad_bird_up
+    , imageBadBirdDown  = scale 0.1 0.1 bad_bird_down
     , imageSkyWithGrass = scale 1.0 1.0 sky_with_grass
     }
 
 
--- Структуры данных
--- Высота и Положение объектов
-type Height = Float -- Высота обьекта
-type Offset = Float -- Сдвиг обьекта
-type Position = (Offset,Height)  -- Координаты обьекта
-type Life = Int -- Жизни (изначально 3)
-type Score = Int -- Счет (изменяется постоянно)
-type Size = Int -- Размер обьекта
+-- | Структуры данных
+-- | Высота и Положение объектов
+type Height   = Float            -- ^ Высота обьекта
+type Offset   = Float            -- ^ Сдвиг обьекта
+type Position = (Offset,Height)  -- ^ Координаты обьекта
+type Life     = Int              -- ^ Жизни (изначально 3)
+type Score    = Int              -- ^ Счет (изменяется постоянно)
+type Size     = Int              -- ^ Размер обьекта
 
--- Объекты игровой вселенной
-data Clover = Clover  -- Клевер - добавляет одну жизнь
+-- | Объекты игровой вселенной
+-- | Клевер - добавляет одну жизнь
+data Clover = Clover
   { cloverPosition :: Position
-  , cloverSize :: Size
+  , cloverSize     :: Size
   }
-     
-data BadBird = BadBird -- Плохая птичка - снимает 2 жизни 
+  
+-- | Плохая птичка - снимает 2 жизни
+data BadBird = BadBird
   { badBirdPosition :: Position
   , badBirdSize     :: Size
   }
-  
-data GoodBird = GoodBird -- Хорошая птичка - снимает 1 жизни
+
+-- | Хорошая птичка - снимает 1 жизни
+data GoodBird = GoodBird 
   { goodBirdPosition :: Position
   , goodBirdSize     :: Size
   }
-  
-data Map = Map 
+
+-- |  Карта препятствий
+data Map = Map
   { mapGoodBirds :: [GoodBird]
   , mapBadBirds  :: [BadBird]
   , mapClovers   :: [Clover]
   }
 
--- Корова
+-- | Корова
 data Cow = Cow
   { cowPosition :: Position
   , cowSize     :: Float
   }
 
--- Игровая вселенная
+-- | Игровая вселенная
 data Universe = Universe
-  { universeMap       :: Map   -- Препятствия игровой вселенной
-  , universeCow       :: Cow   -- Корова
-  , universeScore     :: Score    --  Cчет
-  , universeLife      :: Life    --  Жизни
+  { universeMap       :: Map   -- ^ Препятствия игровой вселенной
+  , universeCow       :: Cow   -- ^ Корова
+  , universeScore     :: Scor  -- ^ Cчет
+  , universeLife      :: Life  -- ^ Жизни
   }
--- Изображения объектов
+  
+-- | Изображения объектов
 data Images = Images
-  { imageCow  :: Picture   -- ^ Изображение коровы.
-  , imageClover :: Picture   -- ^ Изображение клевера
-  , imageGoodBirdUp       :: Picture   -- ^ Изображение GrayBirdUp.
-  , imageGoodBirdDown       :: Picture   -- ^ Изображение GrayBirdDown.
+  { imageCow             :: Picture   -- ^ Изображение коровы.
+  , imageClover          :: Picture   -- ^ Изображение клевера
+  , imageGoodBirdUp      :: Picture   -- ^ Изображение GrayBirdUp.
+  , imageGoodBirdDown    :: Picture   -- ^ Изображение GrayBirdDown.
   , imageBadBirdUp       :: Picture   -- ^ Изображение BlueBirdUp.
-  , imageBadBirdDown       :: Picture   -- ^ Изображение BlueBirdDown.
-  , imageSkyWithGrass       :: Picture   -- ^ Изображение Неба.
+  , imageBadBirdDown     :: Picture   -- ^ Изображение BlueBirdDown.
+  , imageSkyWithGrass    :: Picture   -- ^ Изображение Неба.
   }
 
 
--- Отрисовка игровой вселенной
--- Отобразить игровую вселенную (Ралина)
+-- | Отрисовка игровой вселенной
+-- | Отобразить игровую вселенную (Ралина)
 drawUniverse :: Images -> Universe -> Picture
 drawUniverse images u = pictures
   [ drawBackground imageSkyWithGrass
@@ -104,13 +109,14 @@ drawUniverse images u = pictures
   , drawLife (universeLife u)
   ]
 
+-- | Отобразить фон
 drawBackground :: Picture -> Picture
 drawBackground image = translate -w h (scale 1.0 1.0 image)
   where 
     w = fromIntegral screenWidth  / 2
     h = fromIntegral screenHeight / 2
     
--- Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
+-- | Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
 drawObstacles :: Images -> Map -> Picture
 drawObstacles images obstacles = pictures
   [ pictures (map (draw  (imageGoodBirdUp  images)) (mapGoodBirds  obstacles))
@@ -118,45 +124,41 @@ drawObstacles images obstacles = pictures
   , pictures (map (draw (imageClover  images)) (mapClovers obstacles))
   ]
 
--- Оставить только те препятствия, которые входят в экран (-)
-cropObstaclesInsideScreen :: [Obstacle] -> [Obstacle]
-
-
--- Нарисовать корову (Ралина)
+-- | Нарисовать корову (Ралина)
 drawCow :: Picture -> Cow -> Picture
 drawCow image cow = translate x y (scale r r image)
   where
     (x, y) = position cow
     r = size cow
 
--- Нарисовать счёт в левом верхнем углу экрана (Ралина)
+-- | Нарисовать счёт в левом верхнем углу экрана (Ралина)
 drawScore :: Score -> Picture
 drawScore score = translate (-w) h (scale 30 30 (pictures
   [ 
-  -- color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- белая рамка
-  -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])    -- чёрные внутренности
+  -- color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- ^ белая рамка
+  -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])  -- ^ чёрные внутренности
   -- , 
-  translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show score))))  -- красный счёт
+  translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show score))))     -- ^ красный счёт
   ]))
   where
     w = fromIntegral screenWidth  / 2
     h = fromIntegral screenHeight / 2
 
--- Нарисовать жизни в правом верхнем углу экрана (Ралина)
+-- | Нарисовать жизни в правом верхнем углу экрана (Ралина)
 drawLife :: Life -> Picture
 drawLife life = translate w h (scale 30 30 (pictures
-  [ --color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- белая рамка
-  -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])    -- чёрные внутренности
+  [ --color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- ^ белая рамка
+  -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])   -- ^ чёрные внутренности
   -- , 
-  translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show life))))  -- красная жизнь
+  translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show life))))       -- ^ красная жизнь
   ]))
   where
     w = fromIntegral screenWidth  / 2
     h = fromIntegral screenHeight / 2
 
 
--- Инициализация вселенной (Дана)
--- Инициализировать игровую вселенную, используя генератор случайных значений
+-- | Инициализация вселенной (Дана)
+-- | Инициализировать игровую вселенную, используя генератор случайных значений
 initUniverse :: StdGen -> Universe
 initUniverse g = Universe
     { universeMap  = initMap g 
@@ -165,17 +167,17 @@ initUniverse g = Universe
     , universeLife  = 3
     }
 
--- Реализация препятствий
+-- | Реализация препятствий
 class Obstacle o where 
-    -- Нарисовать одно препятствие (Ралина)
+    -- | Нарисовать одно препятствие
     draw :: Picture -> o -> Picture
-    -- Сталкивается ли корова с препятствием? (Денис)
+    -- | Сталкивается ли корова с препятствием?
     collides :: Cow -> o -> Bool
-    -- Получение позиции препятствия
+    -- | Получение позиции препятствия
     getPosition :: o -> Position
-    -- Получние размера препятствия
+    -- | Получние размера препятствия
     getSize :: o -> Float
-    -- Обновление препятствия
+    -- | Обновление препятствия
     update :: o -> Position -> Size -> o
     
     
@@ -242,28 +244,28 @@ instance Obstacle GoodBird where
         , goodBirdSize = s
         }
     
--- Инициализировать клевер
+-- | Инициализировать клевер
 initClover :: Position -> Clover
 initClover p = Clover 
     { cloverPosition = p
     , cloverSize = defaultCloverSize
     }
 
--- Инициализировать плохую птичку 
+-- | Инициализировать плохую птичку 
 initBadBird :: Position -> BadBird
 initBadBird p = BadBird
     { badBirdPosition = p 
     , badBirdSize = defaultBadBirdSize
     }
     
--- Инициализировать хорошую птичку
+-- | Инициализировать хорошую птичку
 initGoodBird :: Position -> GoodBird
 initGoodBird p = GoodBird
     { goodBirdPosition = p 
     , goodBirdSize = defaultGoodBirdSize
     }
 
--- Инициализировать карту препятствий (Дана)
+-- | Инициализировать карту препятствий (Дана)
 --TODO: можно изменить defaultOffset для препятствий разного типа
 initMap :: StdGen -> Map
 initMap g = Map 
@@ -276,14 +278,14 @@ initMap g = Map
     positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
     positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
 
--- Инициализировать корову (Дана)
+-- | Инициализировать корову (Дана)
 initCow :: Cow
 initCow = Cow 
     { cowPosition = (cowInitHeight, cowInitOffset)
     , cowSize = defaultCowSize
     }
 
--- Оставить только те препятствия, которые входят в экран 
+-- | Оставить только те препятствия, которые входят в экран 
 cropInsideScreen :: Obstacle o => [o] -> [o]
 
 -- | Обработчик событий игры(Дана)
@@ -317,12 +319,12 @@ goDown u = u
     h = fromIntegral screenHeight / 2
 
 
--- Сталкивается ли корова с любыми препятствиями (Денис 
+-- | Сталкивается ли корова с любыми препятствиями (Денис 
 collisionMulti :: Obstacle o => Cow -> [o] -> Bool
 collisionMulti cow os = foldr1 (&&) (map (collides cow) (cropInsideScreen os)) 
     
--- Обновление игровой вселенной
--- Обновить состояние игровой вселенной (Валера)
+-- | Обновление игровой вселенной
+-- | Обновить состояние игровой вселенной (Валера)
 updateUniverse :: Float -> Universe -> Universe
 
 -- Обновить состояние коровы (Валера)
@@ -332,48 +334,48 @@ updateUniverse :: Float -> Universe -> Universe
 -- заменено на функции goUp и goDown, которые непосредственно меняют cowPositions
 -- moveCow :: Universe -> Universe
 
--- Обновить карту игровой вселенной (Валера)
+-- | Обновить карту игровой вселенной (Валера)
 updateMap :: Float -> Map -> Map
 
--- Обновить препятствия игровой вселенной (Валера)
+-- | Обновить препятствия игровой вселенной (Валера)
 updateObstacles :: Obstacle o => Float -> [o] -> [o]
 
--- Обновить счет (Валера)
+-- | Обновить счет (Валера)
 updateScore :: Float -> Score -> Score
 
--- Обновить жизни (Валера)
+-- | Обновить жизни (Валера)
 updateLife :: Float -> Life -> Life
 
--- Текущая скорость движения игрока по вселенной (троится по времени и изначальной скорости)
-сurrentSpeed :: Float -> Float -> Float
+-- | Текущая скорость движения игрока по вселенной (троится по времени и изначальной скорости)
+сurrentSpeed :: Float -> Float
+currentSpeed t = gameSpeed + fromIntegral t / 1000
 
-
--- Константы, параметры игры
--- Ширина экрана
+-- | Константы, параметры игры
+-- | Ширина экрана
 screenWidth :: Int
 screenWidth = 800
 
--- Высота экрана
+-- | Высота экрана
 screenHeight :: Int
 screenHeight = 450
 
--- Положение правого края экрана
+-- | Положение правого края экрана
 screenRight :: Offset
 screenRight = fromIntegral screenWidth / 2
 
--- Положение левого края экрана
+-- | Положение левого края экрана
 screenLeft :: Offset
 screenLeft = - fromIntegral screenWidth / 2
 
--- Положение верхнего края экрана
+-- | Положение верхнего края экрана
 screenTop :: Height
 screenTop = fromIntegral screenHeight / 2
 
--- Положение нижнего края экрана
+-- | Положение нижнего края экрана
 screenBottom :: Height
 screenBottom = - fromIntegral screenHeight / 2
 
--- Расстояние между препятствиями
+-- | Расстояние между препятствиями
 defaultOffset :: Offset
 defaultOffset = 300
 
@@ -395,15 +397,15 @@ obstacleHeightRange = (-h, h)
   where
     h = (fromIntegral screenHeight) / 2 --необходимо чекнуть
 
--- Изначальная скорость движения игрока по вселенной - абсолютное изменение 
--- изменение высоты игрока при нажатии на клавиши (в пикселях)
+-- | Изначальная скорость движения игрока по вселенной - абсолютное изменение 
+-- | изменение высоты игрока при нажатии на клавиши (в пикселях)
 gameSpeed :: Float
 gameSpeed = 100
 
--- Положение коровы по горизонтали
+-- | Положение коровы по горизонтали
 cowInitOffset :: Offset
 cowInitOffset = screenLeft + 100
 
--- Положение коровы по вертикали
+-- | Положение коровы по вертикали
 cowInitHeight :: Height
 cowInitHeight = screenBottom + 200
