@@ -262,7 +262,7 @@ defaultCowSize = 1
 -- Диапазон высот препятствий
 obstacleHeightRange :: (Height, Height)
 obstacleHeightRange = (0,0)
--- Изначальная скорость движения игрока по вселенной (в пикселях в секунду).
+-- Изначальная скорость движения игрока по вселенной (в пикселях в секунду)
 gameSpeed :: Float
 gameSpeed = 100
 
