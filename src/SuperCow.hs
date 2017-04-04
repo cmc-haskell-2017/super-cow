@@ -96,12 +96,19 @@ data Images = Images
 -- Отобразить игровую вселенную (Ралина)
 drawUniverse :: Images -> Universe -> Picture
 drawUniverse images u = pictures
-  [ drawObstacles images (universeMap u)
+  [ drawBackground imageSkyWithGrass
+  , drawObstacles images (universeMap u)
   , drawCow (imageCow images) (universeCow u)
   , drawScore (universeScore u)
   , drawLife (universeLife u)
   ]
 
+drawBackground :: Picture -> Picture
+drawBackground image = translate -w h (scale 1.0 1.0 image)
+  where 
+    w = fromIntegral screenWidth  / 2
+    h = fromIntegral screenHeight / 2
+    
 -- Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
 drawObstacles :: Images -> Map -> Picture
 drawObstacles images obstacles = pictures
