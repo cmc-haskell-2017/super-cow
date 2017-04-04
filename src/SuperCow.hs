@@ -129,8 +129,8 @@ drawObstacles images obstacles = pictures
 drawCow :: Picture -> Cow -> Picture
 drawCow image cow = translate x y (scale r r image)
   where
-    (x, y) = position cow
-    r = size cow
+    (x, y) = cowPosition cow
+    r = cowSize cow
 
 -- | Нарисовать счёт в левом верхнем углу экрана (Ралина)
 drawScore :: Score -> Picture
@@ -183,15 +183,16 @@ class Obstacle o where
     
     
 instance Obstacle Clover where    
-    draw image clover = translate x y (scale r r image)
+    draw image clover = translate x y (scale (fromIntegral r) (fromIntegral r) image)
         where
             (x, y) = cloverPosition clover
             r = cloverSize clover
             
-    collides (Cow (x1,y1)) clover 
+    collides cow clover 
         | x1 == x2 && y1 == y2 = True
         | otherwise = False
         where
+            (x1,y1) = cowPosition cow
             (x2,y2) = cloverPosition clover
     
     getPosition clover = cloverPosition clover
@@ -204,15 +205,16 @@ instance Obstacle Clover where
         }
     
 instance Obstacle BadBird where
-    draw image badbird = translate x y (scale r r image)
+    draw image badbird = translate x y (scale (fromIntegral r) (fromIntegral r) image)
         where
             (x, y) = badBirdPosition badbird
             r = badBirdSize badbird
     
-    collides (Cow (x1,y1)) badbird 
+    collides cow badbird 
         | x1 == x2 && y1 == y2 = True
         | otherwise = False
         where
+            (x1,y1) = cowPosition cow
             (x2,y2) = badBirdPosition badbird
         
     getPosition badbird = badBirdPosition badbird
@@ -225,15 +227,16 @@ instance Obstacle BadBird where
         }
         
 instance Obstacle GoodBird where 
-    draw image goodbird = translate x y (scale r r image)
+    draw image goodbird = translate x y (scale (fromIntegral r) (fromIntegral r) image)
         where
             (x, y) = goodBirdPosition goodbird
             r = goodBirdSize goodbird
     
-    collides (Cow (x1,y1)) goodbird 
+    collides cow goodbird 
         | x1 == x2 && y1 == y2 = True
         | otherwise = False
         where
+            (x1,y1) = cowPosition cow
             (x2,y2) = goodBirdPosition goodbird
             
     getPosition goodbird = goodBirdPosition goodbird
@@ -270,14 +273,14 @@ initGoodBird p = GoodBird
 --TODO: можно изменить defaultOffset для препятствий разного типа
 initMap :: StdGen -> Map
 initMap g = Map 
-  { mapGoodBirds = map initGoodBirdBird positions_1
+  { mapGoodBirds = map initGoodBird positions_1
   , mapClovers = map initClover positions_2
   , mapBadBirds = map initBadBird positions_3
   }
   where
-    positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
-    positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
-    positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
+    positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
+    positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
+    positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
 
 -- | Инициализировать корову (Дана)
 initCow :: Cow
@@ -294,16 +297,14 @@ cropInsideScreen _ = []
 handleUniverse :: Event -> Universe -> Universe
 handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = goUp
 handleUniverse (EventKey (SpecialKey KeySpace) Up _ _) = goDown
-handleUniverse (EventKey (SpecialKey KeySpace) Left _ _) = goLeft
-handleUniverse (EventKey (SpecialKey KeySpace) Right _ _) = goRight
 handleUniverse _ = id
 
 -- | Передвижение коровы вверх, если можно.
 goUp :: Universe -> Universe
 goUp u = u
   { universeCow = Cow 
-        {cowPosition = updatePositions cowPosition universeCow u
-        , cowSize = cowSize universeCow u
+        {cowPosition = updatePositions (cowPosition (universeCow u))
+        , cowSize = cowSize (universeCow u)
         }
   }
   where
@@ -314,8 +315,8 @@ goUp u = u
 goDown :: Universe -> Universe
 goDown u = u
   { universeCow = Cow 
-        {cowPosition = updatePositions cowPosition universeCow u
-        , cowSize = cowSize universeCow
+        {cowPosition = updatePositions (cowPosition (universeCow u))
+        , cowSize = cowSize (universeCow u)
         }
   }
   where
