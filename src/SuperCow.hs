@@ -44,21 +44,22 @@ type Offset = Float -- Сдвиг обьекта
 type Position = (Offset,Height)  -- Координаты обьекта
 type Life = Int -- Жизни (изначально 3)
 type Score = Int -- Счет (изменяется постоянно)
+type Size = Int -- Размер обьекта
 
 -- Объекты игровой вселенной
 data Clover = Clover  -- Клевер - добавляет одну жизнь
   { cloverPosition :: Position
-  , cloverSize :: Float
+  , cloverSize :: Size
   }
      
 data BadBird = BadBird -- Плохая птичка - снимает 2 жизни 
   { badBirdPosition :: Position
-  , badBirdSize     :: Float
+  , badBirdSize     :: Size
   }
   
 data GoodBird = GoodBird -- Хорошая птичка - снимает 1 жизни
   { goodBirdPosition :: Position
-  , goodBirdSize     :: Float
+  , goodBirdSize     :: Size
   }
   
 data Map = Map 
@@ -152,11 +153,11 @@ drawLife life = translate w h (scale 30 30 (pictures
 -- Инициализировать игровую вселенную, используя генератор случайных значений
 initUniverse :: StdGen -> Universe
 initUniverse g = Universe
-  { universeMap  = initMap g 
-  , universeCow = initCow
-  , universeScore  = 0
-  , universeLife  = 3
-  }
+    { universeMap  = initMap g 
+    , universeCow = initCow
+    , universeScore  = 0
+    , universeLife  = 3
+    }
 
 -- Реализация препятствий
 class Obstacle o where 
@@ -164,10 +165,12 @@ class Obstacle o where
     draw :: Picture -> o -> Picture
     -- Сталкивается ли корова с препятствием? (Денис)
     collides :: Cow -> o -> Bool
-    -- Получение позиции
+    -- Получение позиции препятствия
     getPosition :: o -> Position
-    -- Получние размера
+    -- Получние размера препятствия
     getSize :: o -> Float
+    -- Обновление препятствия
+    update :: o -> Position -> Size -> o
     
     
 instance Obstacle Clover where    
@@ -186,6 +189,11 @@ instance Obstacle Clover where
     
     getSize clover = cloverSize clover
     
+    update clover p s = Clover 
+        { cloverPosition = p
+        , cloverSize = s
+        }
+    
 instance Obstacle BadBird where
     draw image badbird = translate x y (scale r r image)
         where
@@ -201,6 +209,11 @@ instance Obstacle BadBird where
     getPosition badbird = badBirdPosition badbird
     
     getSize badbird = badBirdSize badbird
+    
+    update badbird p s = BadBird 
+        { badBirdPosition = p
+        , badBirdSize = s
+        }
         
 instance Obstacle GoodBird where 
     draw image goodbird = translate x y (scale r r image)
@@ -218,6 +231,11 @@ instance Obstacle GoodBird where
     
     getSize goodbird = goodBirdSize goodbird
 
+    update goodbird p s = GoodBird 
+        { goodBirdPosition = p
+        , goodBirdSize = s
+        }
+    
 -- Инициализировать клевер
 initClover :: Position -> Clover
 initClover p = Clover 
@@ -318,16 +336,16 @@ screenBottom = - fromIntegral screenHeight / 2
 defaultOffset :: Offset
 defaultOffset = 300
 
-defaultCloverSize :: Float
+defaultCloverSize :: Size
 defaultCloverSize = 1
 
-defaultBadBirdSize :: Float
+defaultBadBirdSize :: Size
 defaultBadBirdSize = 1
 
-defaultGoodBirdSize :: Float
+defaultGoodBirdSize :: Size
 defaultGoodBirdSize = 1
 
-defaultCowSize :: Float
+defaultCowSize :: Size
 defaultCowSize = 1
 
 -- Диапазон высот препятствий
