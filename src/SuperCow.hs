@@ -328,7 +328,7 @@ updateUniverse dt u = u
   { universeMap  = updateMap  dt (universeMap  u)
   , universeCow = updateCow dt (universeCow u)
   , universeScore  = updateScore dt (universeScore u)
-  , updateLife = updateLife dt (universeLife u)
+  , updateLife = updateLife dt u
   }
 
 -- Обновить состояние коровы (Валера)
@@ -359,7 +359,7 @@ updateObstacles dt (obstacle : obstaclesTail)
     size = (getSize obstacle)
     pos = coordX - screenLeft + size
     dx  = dt * gameSpeed
-    dt' = dt - coordY / gameSpeed
+    dt' = dt - coordX / gameSpeed
 
 -- Обновить счет (Валера)
 updateScore :: Float -> Score -> Score
@@ -367,12 +367,16 @@ updateScore _ score = score + 1
 
 
 -- Обновить жизни (Валера)
-updateLife :: Float -> Life -> Universe -> Map -> Life
-updateLife dt life u map =
-  | collisionMulti (universeCow u) (mapGoodBirds map) = life - 1
-  | collisionMulti (universeCow u) (mapBadBirds map) = life - 2
-  | collisionMulti (universeCow u) (mapClovers map) = life + 1
+updateLife :: Float -> Universe -> Life
+updateLife dt u =
+  | collisionMulti cow (mapGoodBirds map) = life - 1
+  | collisionMulti cow (mapBadBirds map) = life - 2
+  | collisionMulti cow (mapClovers map) = life + 1
   | otherwise = life
+  where
+    life = (universeLife u)
+    cow = (universeCow u)
+    map = (universeMap u)
 
 -- Текущая скорость движения игрока по вселенной (троится по времени и изначальной скорости)
 сurrentSpeed :: Float -> Float -> Float
