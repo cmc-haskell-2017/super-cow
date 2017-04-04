@@ -76,7 +76,7 @@ data Map = Map
 -- | Корова
 data Cow = Cow
   { cowPosition :: Position
-  , cowSize     :: Float
+  , cowSize     :: Size
   }
 
 -- | Игровая вселенная
@@ -127,7 +127,7 @@ drawObstacles images obstacles = pictures
 
 -- | Нарисовать корову (Ралина)
 drawCow :: Picture -> Cow -> Picture
-drawCow image cow = translate x y (scale r r image)
+drawCow image cow = translate x y (scale (fromIntegral r) (fromIntegral r) image)
   where
     (x, y) = cowPosition cow
     r = cowSize cow
