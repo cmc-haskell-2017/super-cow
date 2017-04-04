@@ -351,13 +351,15 @@ updateObstacles :: Obstacle o => Float -> [o] -> [o]
 updateObstacles _ [] = []
 updateObstacles dt (obstacle : obstaclesTail)
   | dx > pos  = updateObstacles dt' obstaclesTail
-  | otherwise = (((fst offset) - dx), snd offset), size) : gates -- Fix this
+  | otherwise = (update obstacle (coordX - dx, coordY) size) : obstaclesTail
   where
     offset = (getPosition obstacle)
+    coordX = (fst offset)
+    coordY = (snd offset)
     size = (getSize obstacle)
-    pos = offset - screenLeft + size
+    pos = coordX - screenLeft + size
     dx  = dt * gameSpeed
-    dt' = dt - offset / gameSpeed
+    dt' = dt - coordY / gameSpeed
 
 -- Обновить счет (Валера)
 updateScore :: Float -> Score -> Score
