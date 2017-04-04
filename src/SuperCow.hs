@@ -334,7 +334,7 @@ updateUniverse dt u = u
   { universeMap  = updateMap  dt (universeMap  u)
   , universeCow = updateCow dt (universeCow u)
   , universeScore  = updateScore dt (universeScore u)
-  , updateLife = updateLife dt u
+  , universeLife = updateLife dt u
   }
 
 -- Обновить состояние коровы (Валера)
@@ -349,7 +349,7 @@ updateMap :: Float -> Map -> Map
 updateMap dt map = map
   { mapGoodBirds = updateObstacles dt (mapGoodBirds map)
   , mapBadBirds = updateObstacles dt (mapBadBirds map)
-  , mapClovers = updateClovers dt (mapClovers map)
+  , mapClovers = updateObstacles dt (mapClovers map)
   }
 
 -- | Обновить препятствия игровой вселенной (Валера)
@@ -363,7 +363,7 @@ updateObstacles dt (obstacle : obstaclesTail)
     coordX = fst offset
     coordY = snd offset
     size = getSize obstacle
-    pos = coordX - screenLeft + size
+    pos = coordX - screenLeft + fromIntegral size
     dx  = dt * gameSpeed
     dt' = dt - fromIntegral coordX / gameSpeed
 
