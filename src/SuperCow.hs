@@ -55,7 +55,7 @@ data BadBird = BadBird -- Плохая птичка - снимает 2 жизн�
   { badBirdPosition :: Position
   , badBirdSize     :: Float
   }
-  H
+  
 data GoodBird = GoodBird -- Хорошая птичка - снимает 1 жизни
   { goodBirdPosition :: Position
   , goodBirdSize     :: Float
@@ -250,8 +250,8 @@ initGoodBird p = GoodBird
 initMap :: StdGen -> Map
 initMap g = Map 
   { mapGoodBirds = map initGoodBirdBird positions_1
-    mapClovers = map initClover positions_2
-    mapBadBirds = map initBadBird positions_3
+    , mapClovers = map initClover positions_2
+    , mapBadBirds = map initBadBird positions_3
   }
   where
     positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
