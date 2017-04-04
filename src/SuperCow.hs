@@ -273,6 +273,12 @@ collisionMulti cow os = foldr1 (&&) (map (collides cow) (cropInsideScreen os))
 -- Обновление игровой вселенной
 -- Обновить состояние игровой вселенной (Валера)
 updateUniverse :: Float -> Universe -> Universe
+updateUniverse dt u = u
+  { universeMap  = updateMap  dt (universeMap  u)
+  , universeCow = updateCow dt (universeCow u)
+  , universeScore  = updateScore dt (universeScore u)
+  , updateLife = updateLife dt (universeLife u)
+  }
 
 -- Обновить состояние коровы (Валера)
 updateCow :: Float -> Cow -> Cow
@@ -282,15 +288,37 @@ moveCow :: Universe -> Universe
 
 -- Обновить карту игровой вселенной (Валера)
 updateMap :: Float -> Map -> Map
+updateMap dt map = map
+  { mapGoodBirds = updateObstacles dt (mapGoodBirds map)
+  , mapBadBirds = updateObstacles dt (mapBadBirds map)
+  , mapClovers = updateClovers dt (mapClovers map)
+  }
 
 -- Обновить препятствия игровой вселенной (Валера)
 updateObstacles :: Obstacle o => Float -> [o] -> [o]
+updateObstacles _ [] = []
+updateObstacles dt (obstacle : obstaclesTail)
+  | dx > pos  = updateObstacles dt' obstaclesTail
+  | otherwise = (((fst offset) - dx), snd offset), size) : gates -- Fix this
+  where
+    offset = (getPosition obstacle)
+    size = (getSize obstacle)
+    pos = offset - screenLeft + size
+    dx  = dt * gameSpeed
+    dt' = dt - offset / gameSpeed
 
 -- Обновить счет (Валера)
 updateScore :: Float -> Score -> Score
+updateScore _ score = score + 1
+
 
 -- Обновить жизни (Валера)
-updateLife :: Float -> Life -> Life
+updateLife :: Float -> Life -> Universe -> Map -> Life
+updateLife dt life u map =
+  | collisionMulti (universeCow u) (mapGoodBirds map) = life - 1
+  | collisionMulti (universeCow u) (mapBadBirds map) = life - 2
+  | collisionMulti (universeCow u) (mapClovers map) = life + 1
+  | otherwise = life
 
 -- Текущая скорость движения игрока по вселенной (троится по времени и изначальной скорости)
 сurrentSpeed :: Float -> Float -> Float
