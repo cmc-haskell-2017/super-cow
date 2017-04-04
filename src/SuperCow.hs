@@ -270,14 +270,14 @@ initGoodBird p = GoodBird
 --TODO: можно изменить defaultOffset для препятствий разного типа
 initMap :: StdGen -> Map
 initMap g = Map 
-  { mapGoodBirds = map initGoodBirdBird positions_1
+  { mapGoodBirds = map initGoodBird positions_1
   , mapClovers = map initClover positions_2
   , mapBadBirds = map initBadBird positions_3
   }
   where
-    positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
-    positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
-    positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
+    positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
+    positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
+    positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
 
 -- | Инициализировать корову (Дана)
 initCow :: Cow
@@ -292,18 +292,18 @@ cropInsideScreen _ = []
 
 -- | Обработчик событий игры(Дана)
 handleUniverse :: Event -> Universe -> Universe
-handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = goUp
-handleUniverse (EventKey (SpecialKey KeySpace) Up _ _) = goDown
-handleUniverse (EventKey (SpecialKey KeySpace) Left _ _) = goLeft
-handleUniverse (EventKey (SpecialKey KeySpace) Right _ _) = goRight
+handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = goUp
+handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = goDown
+-- handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = goLeft
+-- handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = goRight
 handleUniverse _ = id
 
 -- | Передвижение коровы вверх, если можно.
 goUp :: Universe -> Universe
 goUp u = u
   { universeCow = Cow 
-        {cowPosition = updatePositions cowPosition universeCow u
-        , cowSize = cowSize universeCow u
+        {cowPosition = updatePositions (cowPosition (universeCow u))
+        , cowSize = cowSize (universeCow u)
         }
   }
   where
@@ -314,12 +314,12 @@ goUp u = u
 goDown :: Universe -> Universe
 goDown u = u
   { universeCow = Cow 
-        {cowPosition = updatePositions cowPosition universeCow u
-        , cowSize = cowSize universeCow
+        {cowPosition = updatePositions (cowPosition (universeCow u))
+        , cowSize = cowSize (universeCow u)
         }
   }
   where
-    updatePositions (offset, height) = (offset, min -h (height - gameSpeed))
+    updatePositions (offset, height) = (offset, max (-h) (height - gameSpeed))
     h = fromIntegral screenHeight / 2
 
 
