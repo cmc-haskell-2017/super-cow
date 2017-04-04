@@ -56,7 +56,7 @@ data BadBird = BadBird -- Плохая птичка - снимает 2 жизн�
   { badBirdPosition :: Position
   , badBirdSize     :: Size
   }
-  
+  H
 data GoodBird = GoodBird -- Хорошая птичка - снимает 1 жизни
   { goodBirdPosition :: Position
   , goodBirdSize     :: Size
@@ -97,12 +97,19 @@ data Images = Images
 -- Отобразить игровую вселенную (Ралина)
 drawUniverse :: Images -> Universe -> Picture
 drawUniverse images u = pictures
-  [ drawObstacles images (universeMap u)
+  [ drawBackground imageSkyWithGrass
+  , drawObstacles images (universeMap u)
   , drawCow (imageCow images) (universeCow u)
   , drawScore (universeScore u)
   , drawLife (universeLife u)
   ]
 
+drawBackground :: Picture -> Picture
+drawBackground image = translate -w h (scale 1.0 1.0 image)
+  where 
+    w = fromIntegral screenWidth  / 2
+    h = fromIntegral screenHeight / 2
+    
 -- Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
 drawObstacles :: Images -> Map -> Picture
 drawObstacles images obstacles = pictures
@@ -146,7 +153,6 @@ drawLife life = translate w h (scale 30 30 (pictures
   where
     w = fromIntegral screenWidth  / 2
     h = fromIntegral screenHeight / 2
-
 
 
 -- Инициализация вселенной (Дана)
@@ -258,10 +264,17 @@ initGoodBird p = GoodBird
     }
 
 -- Инициализировать карту препятствий (Дана)
+--TODO: можно изменить defaultOffset для препятствий разного типа
 initMap :: StdGen -> Map
-
--- Инициализировать случайный бесконечный список препятствий (Дана)
-initObstacles :: Obstacle o => StdGen -> [o]
+initMap g = Map 
+  { mapGoodBirds = map initGoodBirdBird positions_1
+    mapClovers = map initClover positions_2
+    mapBadBirds = map initBadBird positions_3
+  }
+  where
+    positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
+    positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
+    positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs ObstacleHeightRange g)
 
 -- Инициализировать корову (Дана)
 initCow :: Cow
@@ -273,9 +286,36 @@ initCow = Cow
 -- Оставить только те препятствия, которые входят в экран 
 cropInsideScreen :: Obstacle o => [o] -> [o]
 
--- Обработка событий (-)
--- Обработчик событий игры
+-- | Обработчик событий игры(Дана)
 handleUniverse :: Event -> Universe -> Universe
+handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = goUp
+handleUniverse (EventKey (SpecialKey KeySpace) Up _ _) = goDown
+handleUniverse _ = id
+
+-- | Передвижение коровы вверх, если можно.
+goUp :: Universe -> Universe
+goUp u = u
+  { universeCow = Cow 
+        {cowPosition = updatePositions cowPosition universeCow u
+        , cowSize = cowSize universeCow u
+        }
+  }
+  where
+    updatePositions (offset, height) = (offset, min h (height + gameSpeed))
+    h = fromIntegral screenHeight / 2
+
+-- | Передвижение коровы вниз, если можно.
+goDown :: Universe -> Universe
+goDown u = u
+  { universeCow = Cow 
+        {cowPosition = updatePositions cowPosition universeCow u
+        , cowSize = cowSize universeCow
+        }
+  }
+  where
+    updatePositions (offset, height) = (offset, min -h (height - gameSpeed))
+    h = fromIntegral screenHeight / 2
+
 
 -- Сталкивается ли корова с любыми препятствиями (Денис 
 collisionMulti :: Obstacle o => Cow -> [o] -> Bool
@@ -286,10 +326,11 @@ collisionMulti cow os = foldr1 (&&) (map (collides cow) (cropInsideScreen os))
 updateUniverse :: Float -> Universe -> Universe
 
 -- Обновить состояние коровы (Валера)
-updateCow :: Float -> Cow -> Cow
+-- updateCow :: Float -> Cow -> Cow
 
 -- Изменить положение коровы, если можно (Дана)
-moveCow :: Universe -> Universe
+-- заменено на функции goUp и goDown, которые непосредственно меняют cowPositions
+-- moveCow :: Universe -> Universe
 
 -- Обновить карту игровой вселенной (Валера)
 updateMap :: Float -> Map -> Map
@@ -348,10 +389,14 @@ defaultGoodBirdSize = 1
 defaultCowSize :: Size
 defaultCowSize = 1
 
--- Диапазон высот препятствий
+-- | Диапазон высот препятствий.
 obstacleHeightRange :: (Height, Height)
-obstacleHeightRange = (0,0)
--- Изначальная скорость движения игрока по вселенной (в пикселях в секунду)
+obstacleHeightRange = (-h, h)
+  where
+    h = (fromIntegral screenHeight) / 2 --необходимо чекнуть
+
+-- Изначальная скорость движения игрока по вселенной - абсолютное изменение 
+-- изменение высоты игрока при нажатии на клавиши (в пикселях)
 gameSpeed :: Float
 gameSpeed = 100
 
