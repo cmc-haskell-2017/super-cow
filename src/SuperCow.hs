@@ -295,8 +295,10 @@ cropInsideScreen _ = []
 
 -- | Обработчик событий игры(Дана)
 handleUniverse :: Event -> Universe -> Universe
-handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = goUp
-handleUniverse (EventKey (SpecialKey KeySpace) Up _ _) = goDown
+handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = goUp
+handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = goDown
+-- handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = goLeft
+-- handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = goRight
 handleUniverse _ = id
 
 -- | Передвижение коровы вверх, если можно.
@@ -320,7 +322,7 @@ goDown u = u
         }
   }
   where
-    updatePositions (offset, height) = (offset, min -h (height - gameSpeed))
+    updatePositions (offset, height) = (offset, max (-h) (height - gameSpeed))
     h = fromIntegral screenHeight / 2
 
 
