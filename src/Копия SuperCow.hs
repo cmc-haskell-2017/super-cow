@@ -13,8 +13,8 @@ runSuperCow images = do
   play display bgColor fps (initUniverse g) (drawUniverse images) handleUniverse updateUniverse
   where
     display = InWindow "Super Cow" (screenWidth, screenHeight) (200, 200)
-    bgColor = red   -- цвет фона
-    fps     = 1     -- кол-во кадров в секунду
+    bgColor = white   -- цвет фона
+    fps     = 60      -- кол-во кадров в секунду
 
 -- | Загрузка изображений
 loadImages :: IO Images
@@ -28,12 +28,12 @@ loadImages = do
   Just sky_with_grass     <- loadJuicyJPG "images/SkyWithGrass.jpg"
 
   return Images
-    { imageCow          = scale 1.1 1.1 cow
-    , imageClover       = scale 1.1 1.1 clover
-    , imageGoodBirdUp   = scale 1.1 1.1 good_bird_up
-    , imageGoodBirdDown = scale 1.1 1.1 good_bird_down
-    , imageBadBirdUp    = scale 1.1 1.1 bad_bird_up
-    , imageBadBirdDown  = scale 1.1 1.1 bad_bird_down
+    { imageCow          = scale 0.1 0.1 cow
+    , imageClover       = scale 0.1 0.1 clover
+    , imageGoodBirdUp   = scale 0.1 0.1 good_bird_up
+    , imageGoodBirdDown = scale 0.1 0.1 good_bird_down
+    , imageBadBirdUp    = scale 0.1 0.1 bad_bird_up
+    , imageBadBirdDown  = scale 0.1 0.1 bad_bird_down
     , imageSkyWithGrass = scale 1.0 1.0 sky_with_grass
     }
 
@@ -151,7 +151,7 @@ drawLife life = translate w h (scale 30 30 (pictures
   [ --color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- ^ белая рамка
   -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])   -- ^ чёрные внутренности
   -- , 
-  translate (-2) (-1.5) (scale 0.01 0.01 (color red (text (show life))))       -- ^ красная жизнь
+  translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show life))))       -- ^ красная жизнь
   ]))
   where
     w = fromIntegral screenWidth  / 2
@@ -257,14 +257,14 @@ initMap g = Map
     (g1, g2) = split g
     (_, g3) = next g1
     -- ВОТ ТУТ НАДО РАЗНИЦУ ПО ГОРИЗОНТАЛИ ТОЖЕ ДЕЛАТЬ РАНДОМНОЙ
-    positions_1 = zip [screenLeft, screenLeft + defaultOffset] (randomRs obstacleHeightRange g1)
-    positions_2 = zip [screenLeft, screenLeft + defaultOffset] (randomRs obstacleHeightRange g2)
-    positions_3 = zip [screenLeft, screenLeft + defaultOffset] (randomRs obstacleHeightRange g3)
+    positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g1)
+    positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g2)
+    positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g3)
 
 -- | Инициализировать корову (Дана)
 initCow :: Cow
 initCow = Cow 
-    { cowPosition = (cowInitOffset, cowInitHeight)
+    { cowPosition = (cowInitHeight, cowInitOffset)
     , cowSize = defaultCowSize
     }
 
@@ -324,6 +324,11 @@ collisionMulti cow os = or (map (collides cow) (cropInsideScreen os))
 -- | Обновить состояние игровой вселенной (Валера)
 updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u = u
+  { universeMap  = universeMap  u
+  -- , universeCow = updateCow dt (universeCow u)
+  , universeScore  = universeScore u
+  , universeLife = 0
+  } 
   -- { universeMap  = updateMap  dt (universeMap  u)
   -- -- , universeCow = updateCow dt (universeCow u)
   -- , universeScore  = updateScore dt (universeScore u)
@@ -434,7 +439,7 @@ cowSpeed = 5
 
 -- | Положение коровы по горизонтали
 cowInitOffset :: Offset
-cowInitOffset = screenLeft + (fromIntegral screenWidth / 10)
+cowInitOffset = screenLeft + 100
 
 -- | Положение коровы по вертикали
 cowInitHeight :: Height
