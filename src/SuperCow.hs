@@ -257,9 +257,9 @@ initMap g = Map
     (g1, g2) = split g
     (_, g3) = next g1
     -- ВОТ ТУТ НАДО РАЗНИЦУ ПО ГОРИЗОНТАЛИ ТОЖЕ ДЕЛАТЬ РАНДОМНОЙ
-    positions_1 = zip [screenLeft, screenLeft + defaultOffset] (randomRs obstacleHeightRange g1)
-    positions_2 = zip [screenLeft, screenLeft + defaultOffset] (randomRs obstacleHeightRange g2)
-    positions_3 = zip [screenLeft, screenLeft + defaultOffset] (randomRs obstacleHeightRange g3)
+    positions_1 = zip [screenLeft, screenLeft + defaultOffset ..] (randomRs obstacleHeightRange g1)
+    positions_2 = zip [screenLeft, screenLeft + defaultOffset ..] (randomRs obstacleHeightRange g2)
+    positions_3 = zip [screenLeft, screenLeft + defaultOffset ..] (randomRs obstacleHeightRange g3)
 
 -- | Инициализировать корову (Дана)
 initCow :: Cow
@@ -277,7 +277,7 @@ cropInsideScreen = filter (\o -> pos o > screenLeft && pos o < screenRight)
 -- | Обработчик событий игры(Дана)
 handleUniverse :: Event -> Universe -> Universe
 -- handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateCow (updatePositions (+ cowSpeed))
-handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = goUp
+handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = goUp
 handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = goDown
 -- handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = goLeft
 -- handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = goRight
@@ -296,8 +296,8 @@ goUp u = u
         }
   }
   where
-    updatePositions (offset, height) = (offset, min h (height + cowSpeed))
-    h = fromIntegral screenHeight / 2
+    updatePositions (offset, height) = (offset, (height + cowSpeed))
+    h = screenTop
 
 -- | Передвижение коровы вниз, если можно.
 goDown :: Universe -> Universe
@@ -308,8 +308,8 @@ goDown u = u
         }
   }
   where
-    updatePositions (offset, height) = (offset, max (-h) (height - gameSpeed))
-    h = fromIntegral screenHeight / 2
+    updatePositions (offset, height) = (offset, (height - cowSpeed))
+    h = screenBottom
 
 
 -- | Сталкивается ли корова с любыми препятствиями (Денис 
@@ -426,7 +426,7 @@ gameSpeed = 100
 
 -- | изменение высоты коровы при нажатии на клавиши (в пикселях)
 cowSpeed :: Float
-cowSpeed = 5
+cowSpeed = 20
 
 -- | Положение коровы по горизонтали
 cowInitOffset :: Offset
