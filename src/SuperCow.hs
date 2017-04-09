@@ -13,8 +13,8 @@ runSuperCow images = do
   play display bgColor fps (initUniverse g) (drawUniverse images) handleUniverse updateUniverse
   where
     display = InWindow "Super Cow" (screenWidth, screenHeight) (200, 200)
-    bgColor = red   -- цвет фона
-    fps     = 1     -- кол-во кадров в секунду
+    bgColor = white   -- цвет фона
+    fps     = 60     -- кол-во кадров в секунду
 
 -- | Загрузка изображений
 loadImages :: IO Images
@@ -277,16 +277,12 @@ cropInsideScreen = filter (\o -> pos o > screenLeft && pos o < screenRight)
 -- | Обработчик событий игры(Дана)
 handleUniverse :: Event -> Universe -> Universe
 -- handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateCow (updatePositions (+ cowSpeed))
--- handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = goUp
--- handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = goDown
-handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = a
-handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = a
+handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = goUp
+handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = goDown
 -- handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = goLeft
 -- handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = goRight
 handleUniverse _ = id
 
-a :: Universe -> Universe
-a u = u
 
 updateCow :: (Cow -> Cow) -> Universe -> Universe
 updateCow _ u = u 
@@ -324,11 +320,11 @@ collisionMulti cow os = or (map (collides cow) (cropInsideScreen os))
 -- | Обновить состояние игровой вселенной (Валера)
 updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u = u
-  -- { universeMap  = updateMap  dt (universeMap  u)
-  -- -- , universeCow = updateCow dt (universeCow u)
-  -- , universeScore  = updateScore dt (universeScore u)
-  -- , universeLife = updateLife dt u
-  -- }
+  { universeMap  = updateMap  dt (universeMap  u)
+  -- , universeCow = updateCow dt (universeCow u)
+  , universeScore  = updateScore dt (universeScore u)
+  , universeLife = updateLife dt u
+  }
 
 -- Обновить состояние коровы (Валера)
 -- updateCow :: Float -> Cow -> Cow
