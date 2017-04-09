@@ -45,7 +45,7 @@ type Offset   = Float            -- ^ Сдвиг обьекта
 type Position = (Offset,Height)  -- ^ Координаты обьекта
 type Life     = Int              -- ^ Жизни (изначально 3)
 type Score    = Int              -- ^ Счет (изменяется постоянно)
-type Size     = Int              -- ^ Размер обьекта
+type Size     = Float            -- ^ Размер обьекта
 
 -- | Объекты игровой вселенной
 -- | Клевер - добавляет одну жизнь
@@ -127,7 +127,7 @@ drawObstacles images obstacles = pictures
 
 -- | Нарисовать корову (Ралина)
 drawCow :: Picture -> Cow -> Picture
-drawCow image cow = translate x y (scale (fromIntegral r) (fromIntegral r) image)
+drawCow image cow = translate x y (scale r r image)
   where
     (x, y) = cowPosition cow
     r = cowSize cow
@@ -170,34 +170,15 @@ initUniverse g = Universe
 
 -- | Реализация препятствий
 class Obstacle o where
-    -- | Сталкивается ли корова с препятствием?
-    collides :: Cow -> o -> Bool
     -- | Получение позиции препятствия
     getPosition :: o -> Position
     -- | Получние размера препятствия
     getSize :: o -> Size
     -- | Обновление препятствия
     update :: o -> Position -> Size -> o
-    
-draw :: Obstacle o => Picture -> o -> Picture
-draw image o = translate x y (scale r r image)
-  where
-    (x, y) = getPosition o
-    r = fromIntegral (getSize o)
+
     
 instance Obstacle Clover where    
-    draw image clover = translate x y (scale (fromIntegral r) (fromIntegral r) image)
-        where
-            (x, y) = cloverPosition clover
-            r = cloverSize clover
-            
-    collides cow clover 
-        | x1 == x2 && y1 == y2 = True
-        | otherwise = False
-        where
-            (x1,y1) = cowPosition cow
-            (x2,y2) = cloverPosition clover
-    
     getPosition clover = cloverPosition clover
     
     getSize clover = cloverSize clover
@@ -208,18 +189,6 @@ instance Obstacle Clover where
         }
     
 instance Obstacle BadBird where
-    draw image badbird = translate x y (scale (fromIntegral r) (fromIntegral r) image)
-        where
-            (x, y) = badBirdPosition badbird
-            r = badBirdSize badbird
-    
-    collides cow badbird 
-        | x1 == x2 && y1 == y2 = True
-        | otherwise = False
-        where
-            (x1,y1) = cowPosition cow
-            (x2,y2) = badBirdPosition badbird
-        
     getPosition badbird = badBirdPosition badbird
     
     getSize badbird = badBirdSize badbird
@@ -230,18 +199,6 @@ instance Obstacle BadBird where
         }
         
 instance Obstacle GoodBird where 
-    draw image goodbird = translate x y (scale (fromIntegral r) (fromIntegral r) image)
-        where
-            (x, y) = goodBirdPosition goodbird
-            r = goodBirdSize goodbird
-    
-    collides cow goodbird 
-        | x1 == x2 && y1 == y2 = True
-        | otherwise = False
-        where
-            (x1,y1) = cowPosition cow
-            (x2,y2) = goodBirdPosition goodbird
-            
     getPosition goodbird = goodBirdPosition goodbird
     
     getSize goodbird = goodBirdSize goodbird
@@ -250,6 +207,22 @@ instance Obstacle GoodBird where
         { goodBirdPosition = p
         , goodBirdSize = s
         }
+        
+-- | Нарисовать препятствие    
+draw :: Obstacle o => Picture -> o -> Picture
+draw image o = translate x y (scale r r image)
+    where
+        (x, y) = getPosition o
+        r = getSize o
+    
+-- | Сталкивается ли корова с препятствием?
+collides :: Obstacle o => Cow -> o -> Bool
+collides cow o 
+    | x1 == x2 && y1 == y2 = True
+    | otherwise = False
+        where
+            (x1,y1) = cowPosition cow
+            (x2,y2) = getPosition o
     
 -- | Инициализировать клевер
 initClover :: Position -> Clover
@@ -299,13 +272,15 @@ cropInsideScreen _ = []
 
 -- | Обработчик событий игры(Дана)
 handleUniverse :: Event -> Universe -> Universe
-handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateCow (updatePositions (+ cowSpeed))
+-- handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateCow (updatePositions (+ cowSpeed))
+handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = goUp
 handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = goDown
 -- handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = goLeft
 -- handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = goRight
 handleUniverse _ = id
 
 updateCow :: (Cow -> Cow) -> Universe -> Universe
+updateCow _ u = u 
 
 -- | Передвижение коровы вверх, если можно.
 goUp :: Universe -> Universe
@@ -364,15 +339,14 @@ updateMap dt map = map
 updateObstacles :: Obstacle o => Float -> [o] -> [o]
 updateObstacles _ [] = []
 updateObstacles dt obstacles = 
-    filter (\o -> fst getPosition o > screenLeft) map (\o -> update o (coordX - dx, coordY) size) obstacles
+    filter (\o -> fst (getPosition o) > screenLeft) (map (\o -> update o (coordX o - dx, coordY o) (getSize o)) obstacles)
   where
-    offset = getPosition obstacle
-    coordX = fst offset
-    coordY = snd offset
-    size = getSize obstacle
-    pos = coordX - screenLeft + fromIntegral size
+    offset = getPosition 
+    coordX = fst . offset
+    coordY = snd . offset
+    -- pos = coordX - screenLeft + fromIntegral size
     dx  = dt * gameSpeed
-    dt' = dt - coordX / gameSpeed
+    -- dt' = dt - coordX / gameSpeed
 
 -- | Обновить счет (Валера)
 updateScore :: Float -> Score -> Score
