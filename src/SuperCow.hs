@@ -120,9 +120,9 @@ drawBackground image = translate (-w) h (scale 1.0 1.0 image)
 -- | Отобразить все препятствия игровой вселенной, вмещающихся в экран (Ралина)
 drawObstacles :: Images -> Map -> Picture
 drawObstacles images obstacles = pictures
-  [ pictures (map (draw  (imageGoodBirdUp  images)) (mapGoodBirds  obstacles))
-  , pictures (map (draw (imageBadBirdUp images)) (mapBadBirds obstacles))
-  , pictures (map (draw (imageClover  images)) (mapClovers obstacles))
+  [ pictures (map (draw (imageGoodBirdUp  images)) (cropInsideScreen (mapGoodBirds obstacles)))
+  , pictures (map (draw (imageBadBirdUp images)) (cropInsideScreen (mapBadBirds obstacles)))
+  , pictures (map (draw (imageClover  images)) (cropInsideScreen (mapClovers obstacles)))
   ]
 
 -- | Нарисовать корову (Ралина)
@@ -179,31 +179,31 @@ class Obstacle o where
 
     
 instance Obstacle Clover where    
-    getPosition clover = cloverPosition clover
+    getPosition = cloverPosition
     
-    getSize clover = cloverSize clover
+    getSize = cloverSize
     
-    update clover p s = Clover 
+    update _ p s = Clover 
         { cloverPosition = p
         , cloverSize = s
         }
     
 instance Obstacle BadBird where
-    getPosition badbird = badBirdPosition badbird
+    getPosition = badBirdPosition 
     
-    getSize badbird = badBirdSize badbird
+    getSize = badBirdSize 
     
-    update badbird p s = BadBird 
+    update _ p s = BadBird 
         { badBirdPosition = p
         , badBirdSize = s
         }
         
 instance Obstacle GoodBird where 
-    getPosition goodbird = goodBirdPosition goodbird
+    getPosition = goodBirdPosition 
     
-    getSize goodbird = goodBirdSize goodbird
+    getSize = goodBirdSize 
 
-    update goodbird p s = GoodBird 
+    update _ p s = GoodBird 
         { goodBirdPosition = p
         , goodBirdSize = s
         }
@@ -255,9 +255,11 @@ initMap g = Map
   }
   where
     (g1, g2) = split g
-    positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
-    positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
-    positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g)
+    (_, g3) = next g1
+    -- ВОТ ТУТ НАДО РАЗНИЦУ ПО ГОРИЗОНТАЛИ ТОЖЕ ДЕЛАТЬ РАНДОМНОЙ
+    positions_1 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g1)
+    positions_2 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g2)
+    positions_3 = zip [screenLeft, screenLeft + defaultOffset .. ] (randomRs obstacleHeightRange g3)
 
 -- | Инициализировать корову (Дана)
 initCow :: Cow
@@ -268,7 +270,9 @@ initCow = Cow
 
 -- | Оставить только те препятствия, которые входят в экран 
 cropInsideScreen :: Obstacle o => [o] -> [o]
-cropInsideScreen _ = []
+cropInsideScreen = filter (\o -> pos o > screenLeft && pos o < screenRight)
+    where 
+        pos = fst . getPosition
 
 -- | Обработчик событий игры(Дана)
 handleUniverse :: Event -> Universe -> Universe
@@ -287,10 +291,11 @@ goUp :: Universe -> Universe
 goUp u = u
   { universeCow = Cow 
         { cowPosition = updatePositions (cowPosition (universeCow u))
+        , cowSize = cowSize (universeCow u)
         }
   }
   where
-    updatePositions (offset, height) = (offset, min h (height + gameSpeed))
+    updatePositions (offset, height) = (offset, min h (height + cowSpeed))
     h = fromIntegral screenHeight / 2
 
 -- | Передвижение коровы вниз, если можно.
@@ -315,7 +320,7 @@ collisionMulti cow os = or (map (collides cow) (cropInsideScreen os))
 updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u = u
   { universeMap  = updateMap  dt (universeMap  u)
-  --, universeCow = updateCow dt (universeCow u)
+  -- , universeCow = updateCow dt (universeCow u)
   , universeScore  = updateScore dt (universeScore u)
   , universeLife = updateLife dt u
   }
@@ -355,7 +360,7 @@ updateScore _ score = score + 1
 
 -- | Обновить жизни (Валера)
 updateLife :: Float -> Universe -> Life
-updateLife dt u
+updateLife _ u
   | collisionMulti cow (mapGoodBirds map) = life - 1
   | collisionMulti cow (mapBadBirds map) = life - 2
   | collisionMulti cow (mapClovers map) = life + 1
@@ -415,9 +420,12 @@ obstacleHeightRange :: (Height, Height)
 obstacleHeightRange = (screenBottom, screenTop)
 
 -- | Изначальная скорость движения игрока по вселенной - абсолютное изменение 
--- | изменение высоты игрока при нажатии на клавиши (в пикселях)
 gameSpeed :: Float
 gameSpeed = 100
+
+-- | изменение высоты коровы при нажатии на клавиши (в пикселях)
+cowSpeed :: Float
+cowSpeed = 5
 
 -- | Положение коровы по горизонтали
 cowInitOffset :: Offset
