@@ -28,12 +28,12 @@ loadImages = do
   Just sky_with_grass     <- loadJuicyJPG "images/SkyWithGrass.jpg"
 
   return Images
-    { imageCow          = scale 1.1 1.1 cow
-    , imageClover       = scale 1.1 1.1 clover
-    , imageGoodBirdUp   = scale 1.1 1.1 good_bird_up
-    , imageGoodBirdDown = scale 1.1 1.1 good_bird_down
-    , imageBadBirdUp    = scale 1.1 1.1 bad_bird_up
-    , imageBadBirdDown  = scale 1.1 1.1 bad_bird_down
+    { imageCow          = scale 1.0 1.0 cow
+    , imageClover       = scale 1.0 1.0 clover
+    , imageGoodBirdUp   = scale 1.0 1.0 good_bird_up
+    , imageGoodBirdDown = scale 1.0 1.0 good_bird_down
+    , imageBadBirdUp    = scale 1.0 1.0 bad_bird_up
+    , imageBadBirdDown  = scale 1.0 1.0 bad_bird_down
     , imageSkyWithGrass = scale 1.0 1.0 sky_with_grass
     }
 
@@ -180,6 +180,11 @@ class Obstacle o where
     setPosition :: o -> Position -> o
     -- | Установка размера препятствия
     setSize :: o -> Size -> o
+    -- | Высота рисунка препятствия
+    getHeight :: o -> Size
+    -- | Ширина рисунка препятствия
+    getWidth :: o -> Size
+    
 
     
 instance Obstacle Clover where    
@@ -191,6 +196,10 @@ instance Obstacle Clover where
     
     setSize clover s = clover { cloverSize = s }
     
+    getHeight clover = 50
+    
+    getWidth clover = 50
+    
 instance Obstacle BadBird where
     getPosition = badBirdPosition 
     
@@ -199,6 +208,10 @@ instance Obstacle BadBird where
     setPosition badBird p = badBird { badBirdPosition = p }
     
     setSize badBird s = badBird { badBirdSize = s }
+    
+    getWidth badBird = 81
+    
+    getHeight badBird = 42
         
 instance Obstacle GoodBird where 
     getPosition = goodBirdPosition 
@@ -208,6 +221,10 @@ instance Obstacle GoodBird where
     setPosition goodBird p = goodBird { goodBirdPosition = p }
     
     setSize goodBird s = goodBird { goodBirdSize = s }
+    
+    getWidth goodBird = 67
+    
+    getHeight goodBird = 36
             
 -- | Нарисовать препятствие    
 draw :: Obstacle o => Picture -> o -> Picture
@@ -219,11 +236,23 @@ draw image o = translate x y (scale r r image)
 -- | Сталкивается ли корова с препятствием?
 collides :: Obstacle o => Cow -> o -> Bool
 collides cow o 
-    | x1 == x2 && y1 == y2 = True
+    | crux >= oldx && cruy >= oldy && crdx >= oldx && crdy <= oldy = True
+    | crdx >= olux && crdy <= oluy && crux >= olux && cruy >= oluy = True
+    | crdx >= oldx && crdy >= oldy && crux >= olux && cruy <= oluy = True
     | otherwise = False
         where
             (x1,y1) = cowPosition cow
             (x2,y2) = getPosition o
+            s1 = cowSize cow
+            s2 = getSize o
+            -- (clux, cluy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 + (cowPictureSizeHeight cow) / 2 * s1)
+            -- (cldx, cldy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 - (cowPictureSizeHeight cow) / 2 * s1)
+            (crux, cruy) = (x1 + (cowPictureSizeWidth cow) / 2 * s1, y1 + (cowPictureSizeHeight cow) / 2 * s1)
+            (crdx, crdy) = (x1 + (cowPictureSizeWidth cow) / 2 * s1, y1 - (cowPictureSizeHeight cow) / 2 * s1)
+            (olux, oluy) = (x2 - (getWidth o) / 2 * s2, y2 + (getHeight o) / 2 * s2)
+            (oldx, oldy) = (x2 - (getWidth o) / 2 * s2, y2 - (getHeight o) / 2 * s2)
+            -- (orux, oruy) = (x2 + (getWidth o) / 2 * s2, y2 + (getHeight o) / 2 * s2)
+            -- (ordx, ordy) = (x2 + (getWidth o) / 2 * s2, y2 - (getHeight o) / 2 * s2)
     
 -- | Инициализировать клевер
 initClover :: Position -> Clover
@@ -393,16 +422,16 @@ defaultOffset :: Offset
 defaultOffset = 300
 
 defaultCloverSize :: Size
-defaultCloverSize = 1
+defaultCloverSize = 1.1
 
 defaultBadBirdSize :: Size
-defaultBadBirdSize = 1
+defaultBadBirdSize = 1.1
 
 defaultGoodBirdSize :: Size
-defaultGoodBirdSize = 1
+defaultGoodBirdSize = 1.1
 
 defaultCowSize :: Size
-defaultCowSize = 1
+defaultCowSize = 1.1
 
 -- | Диапазон высот препятствий.
 obstacleHeightRange :: (Height, Height)
@@ -426,3 +455,10 @@ cowInitOffset = screenLeft + (fromIntegral screenWidth / 10)
 -- | Положение коровы по вертикали
 cowInitHeight :: Height
 cowInitHeight = 0
+
+cowPictureSizeWidth :: Cow -> Size 
+cowPictureSizeWidth _ = 133
+
+cowPictureSizeHeight :: Cow -> Size 
+cowPictureSizeHeight _ = 68
+        
