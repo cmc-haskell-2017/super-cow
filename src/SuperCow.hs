@@ -288,11 +288,14 @@ initMap g = Map
   }
   where
     (g1, g2) = split g
-    (_, g3) = next g1
+    (g3, g4) = split g1
+    (g5, g6) = split g3
     -- ВОТ ТУТ НАДО РАЗНИЦУ ПО ГОРИЗОНТАЛИ ТОЖЕ ДЕЛАТЬ РАНДОМНОЙ
-    positions_1 = zip [screenLeft, screenLeft + defaultOffset ..] (randomRs obstacleHeightRange g1)
-    positions_2 = zip [screenLeft, screenLeft + defaultCloverOffset ..] (randomRs obstacleHeightRange g2)
-    positions_3 = zip [screenLeft, screenLeft + defaultOffset ..] (randomRs obstacleHeightRange g3)
+    positions_1 = zip (zipWith (\const rand -> const + rand) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g4)) (randomRs obstacleHeightRange g1)
+    -- positions_2 = zip (zipWith (\const rand -> const + rand) [screenLeft, screenLeft + defaultCloverOffset..] (randomRs obstacleOffsetRange g5)) (randomRs obstacleHeightRange g2)
+    positions_3 = zip (zipWith (\const rand -> const + rand) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g6)) (randomRs obstacleHeightRange g3)
+    positions_2 = zip [screenLeft, screenLeft + defaultCloverOffset..] (randomRs obstacleHeightRange g2)
+    -- positions_3 = zip [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleHeightRange g3)
 
 -- | Инициализировать корову 
 initCow :: Cow
@@ -434,14 +437,6 @@ screenTop = fromIntegral screenHeight / 2
 screenBottom :: Height
 screenBottom = - fromIntegral screenHeight / 2
 
--- | Расстояние между препятствиями
-defaultOffset :: Offset
-defaultOffset = 300
-
--- | Расстояние между клеверами
-defaultCloverOffset :: Offset
-defaultCloverOffset = 250
-
 defaultCloverSize :: Size
 defaultCloverSize = 1.1
 
@@ -457,6 +452,17 @@ defaultCowSize = 1.1
 -- | Диапазон высот препятствий.
 obstacleHeightRange :: (Height, Height)
 obstacleHeightRange = (screenBottom, screenTop)
+
+-- | Расстояние между препятствиями
+defaultOffset :: Offset
+defaultOffset = screenRight * 1.5
+
+-- | Расстояние между клеверами
+defaultCloverOffset :: Offset
+defaultCloverOffset = 2000
+
+obstacleOffsetRange :: (Offset, Offset)
+obstacleOffsetRange = (-(defaultOffset / 2), defaultOffset / 2)
 
 -- | Изначальная скорость движения игрока по вселенной - абсолютное изменение 
 gameSpeed :: Speed
