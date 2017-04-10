@@ -390,7 +390,7 @@ updateMap dt map = map
 updateObstacles :: Obstacle o => Float -> [o] -> Speed -> [o]
 updateObstacles _ [] _ = []
 updateObstacles dt obstacles speed = 
-    dropWhile (\o -> fst (getPosition o) > screenLeft) (map (\o -> setPosition o (coordX o - dx, coordY o)) obstacles)
+    dropWhile (\o -> fst (getPosition o) < screenLeft) (map (\o -> setPosition o (coordX o - dx, coordY o)) obstacles)
   where
     coordX = fst . getPosition
     coordY = snd . getPosition
