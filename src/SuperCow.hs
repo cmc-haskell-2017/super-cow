@@ -289,13 +289,16 @@ initMap g = Map
   where
     (g1, g2) = split g
     (g3, g4) = split g1
-    (g5, g6) = split g3
+    (g5, g6) = split g2
+    (g7, g8) = split g3
+    (g9, g10) = split g4
     -- ВОТ ТУТ НАДО РАЗНИЦУ ПО ГОРИЗОНТАЛИ ТОЖЕ ДЕЛАТЬ РАНДОМНОЙ
-    positions_1 = zip (zipWith (\const rand -> const + rand) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g4)) (randomRs obstacleHeightRange g1)
-    -- positions_2 = zip (zipWith (\const rand -> const + rand) [screenLeft, screenLeft + defaultCloverOffset..] (randomRs obstacleOffsetRange g5)) (randomRs obstacleHeightRange g2)
-    positions_3 = zip (zipWith (\const rand -> const + rand) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g6)) (randomRs obstacleHeightRange g3)
-    positions_2 = zip [screenLeft, screenLeft + defaultCloverOffset..] (randomRs obstacleHeightRange g2)
-    -- positions_3 = zip [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleHeightRange g3)
+    positions_1 = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g8)) (randomRs obstacleHeightRange g5)
+    positions_2 = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g9)) (randomRs obstacleHeightRange g6)
+    positions_3 = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g10)) (randomRs obstacleHeightRange g7)
+    -- positions_1 = zip [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleHeightRange g2)
+    -- positions_2 = zip [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleHeightRange g3)
+    -- positions_3 = zip [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleHeightRange g4)
 
 -- | Инициализировать корову 
 initCow :: Cow
