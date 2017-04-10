@@ -79,6 +79,8 @@ data Map = Map
 data Cow = Cow
   { cowPosition :: Position
   , cowSize     :: Size
+  , cowSpeedUp :: Speed  -- скорость по вертикали 
+  , cowSpeedLeft :: Speed  -- скорость по горизонтали
   }
 
 -- | Игровая вселенная
@@ -297,6 +299,8 @@ initCow :: Cow
 initCow = Cow 
     { cowPosition = (cowInitOffset, cowInitHeight)
     , cowSize = defaultCowSize
+    , cowSpeedUp = 0
+    , cowSpeedLeft = 0
     }
 
 -- | Оставить только те препятствия, которые входят в экран 
@@ -307,30 +311,38 @@ cropInsideScreen obs = dropWhile (\o -> pos o < screenLeft) $ takeWhile (\o -> p
 
 -- | Обработчик событий игры
 handleUniverse :: Event -> Universe -> Universe
--- handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateCow (updatePositions (+ cowSpeed))
-handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = updateCow goUp
-handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = updateCow goDown
+handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateSpeedCow goUp
+handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = updateSpeedCow goDown
+handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = updateSpeedCow stopCow
+handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = updateSpeedCow stopCow
+handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = updateSpeedCow goLeft
+handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = updateSpeedCow goRight
+handleUniverse (EventKey (SpecialKey KeyLeft) Up _ _) = updateSpeedCow stopCow
+handleUniverse (EventKey (SpecialKey KeyRight) Up _ _) = updateSpeedCow stopCow
 -- handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = goLeft
 -- handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = goRight
 handleUniverse _ = id
 
 
-updateCow :: (Cow -> Cow) -> Universe -> Universe
-updateCow f u = u { universeCow = f $ universeCow u }
+updateSpeedCow :: (Cow -> Cow) -> Universe -> Universe
+updateSpeedCow f u = u { universeCow = f $ universeCow u }
 
 -- | Передвижение коровы вверх, если можно.
 goUp :: Cow -> Cow
-goUp c = c { cowPosition = up $ cowPosition c }
-  where
-    up (offset, height) = (offset, min (h - 40) (height + cowSpeed))
-    h = screenTop
+goUp c = c { cowSpeedUp = -cowSpeed }
 
 -- | Передвижение коровы вниз, если можно.
 goDown :: Cow -> Cow
-goDown c = c { cowPosition = down $ cowPosition c }
-  where
-    down (offset, height) = (offset, max (h + 40) (height - cowSpeed))
-    h = screenBottom
+goDown c = c { cowSpeedUp = cowSpeed }
+
+goLeft :: Cow -> Cow
+goLeft c = c { cowSpeedLeft = cowSpeed }
+
+goRight :: Cow -> Cow
+goRight c = c { cowSpeedLeft = -cowSpeed }
+
+stopCow :: Cow -> Cow
+stopCow c = c { cowSpeedUp = 0, cowSpeedLeft = 0}
 
 
 -- | Сталкивается ли корова с любыми препятствиями  
@@ -342,17 +354,22 @@ collisionMulti cow os = or (map (collides cow) (cropInsideScreen os))
 updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u = u
   { universeMap  = updateMap  dt (universeMap  u)
-  -- , universeCow = updateCow dt (universeCow u)
+  , universeCow = updateCow dt (universeCow u)
   , universeScore  = updateScore dt (universeScore u)
   , universeLife = updateLife dt u
   }
 
--- Обновить состояние коровы 
--- updateCow :: Float -> Cow -> Cow
+updateCow :: Float -> Cow -> Cow
+updateCow dt c = c 
+	{ cowPosition = ((max screenLeft (min screenRight (coordX - dx)))
+					,(max screenBottom (min screenTop (coordY - dy))))
+	}
+  where
+	coordX = fst (cowPosition c)
+	coordY = snd (cowPosition c)
+	dx  = dt * (cowSpeedLeft c)
+	dy = dt * (cowSpeedUp c)
 
--- Изменить положение коровы, если можно 
--- заменено на функции goUp и goDown, которые непосредственно меняют cowPositions
--- moveCow :: Universe -> Universe
 
 -- | Обновить карту игровой вселенной 
 updateMap :: Float -> Map -> Map
@@ -450,7 +467,7 @@ speedIncrease = 0.1
 
 -- | изменение высоты коровы при нажатии на клавиши (в пикселях)
 cowSpeed :: Float
-cowSpeed = 20
+cowSpeed = 200
 
 -- | Положение коровы по горизонтали
 cowInitOffset :: Offset
