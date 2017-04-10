@@ -289,7 +289,7 @@ initMap g = Map
     (_, g3) = next g1
     -- ВОТ ТУТ НАДО РАЗНИЦУ ПО ГОРИЗОНТАЛИ ТОЖЕ ДЕЛАТЬ РАНДОМНОЙ
     positions_1 = zip [screenLeft, screenLeft + defaultOffset ..] (randomRs obstacleHeightRange g1)
-    positions_2 = zip [screenLeft, screenLeft + defaultOffset ..] (randomRs obstacleHeightRange g2)
+    positions_2 = zip [screenLeft, screenLeft + defaultCloverOffset ..] (randomRs obstacleHeightRange g2)
     positions_3 = zip [screenLeft, screenLeft + defaultOffset ..] (randomRs obstacleHeightRange g3)
 
 -- | Инициализировать корову 
@@ -420,6 +420,10 @@ screenBottom = - fromIntegral screenHeight / 2
 -- | Расстояние между препятствиями
 defaultOffset :: Offset
 defaultOffset = 300
+
+-- | Расстояние между клеверами
+defaultCloverOffset :: Offset
+defaultCloverOffset = 250
 
 defaultCloverSize :: Size
 defaultCloverSize = 1.1
