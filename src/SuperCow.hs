@@ -87,6 +87,7 @@ data Universe = Universe
   , universeCow       :: Cow    -- ^ Корова
   , universeScore     :: Score  -- ^ Cчет
   , universeLife      :: Life   -- ^ Жизни
+  , universeStop      :: Bool   -- ^ Флаг остановки игры
   }
   
 -- | Изображения объектов
@@ -232,6 +233,7 @@ initUniverse g = Universe
   , universeCow = initCow
   , universeScore = 0
   , universeLife  = 3
+  , universeStop = False
   }
                 
 -- | Инициализировать клевер
@@ -306,21 +308,24 @@ goCow direct cow
 -- | Остановка коровы.
 stopCow :: String -> Cow -> Cow
 stopCow direct cow  
-	| direct == "up" = cow { cowSpeedUp = cowSpeedUp cow + cowSpeed}
-	| direct == "down" = cow { cowSpeedUp = cowSpeedUp cow - cowSpeed}
-	| direct == "left" = cow { cowSpeedLeft = cowSpeedLeft cow - cowSpeed}
-	| otherwise = cow { cowSpeedLeft = cowSpeedLeft cow + cowSpeed}
+	| direct == "up" = cow { cowSpeedUp = cowSpeedUp cow + cowSpeed }
+	| direct == "down" = cow { cowSpeedUp = cowSpeedUp cow - cowSpeed }
+	| direct == "left" = cow { cowSpeedLeft = cowSpeedLeft cow - cowSpeed }
+	| otherwise = cow { cowSpeedLeft = cowSpeedLeft cow + cowSpeed }
     
 -- | Обновление игровой вселенной
 -- | Обновить состояние игровой вселенной 
 updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u
+  | gameStopped == True = u
   | negativeLifeBalance u = stopGame u
   | otherwise = updateLife dt (u
       { universeMap  = updateMap dt (universeMap u)
       , universeCow = updateCow dt (universeCow u)
       , universeScore  = updateScore dt (universeScore u)
       })
+  where
+    gameStopped = (universeStop u)
 
 
 -- | Проверка на конец игры
@@ -331,7 +336,7 @@ negativeLifeBalance u = life <= 0
 
 -- | Остановить игру
 stopGame :: Universe -> Universe
-stopGame u = u
+stopGame u = u { universeStop = True }
   
 -- | Обновление коровы
 updateCow :: Float -> Cow -> Cow
