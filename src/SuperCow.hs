@@ -339,9 +339,9 @@ toggleGame u
   | universeLife u > 0 = u { universeStop = not stopFlag }
   | otherwise = u
     { universeStop = not stopFlag
-	, universeLife = 3
-	, universeScore = 0
-	}
+    , universeLife = 3
+    , universeScore = 0
+    }
   where
     stopFlag = (universeStop u)
   
