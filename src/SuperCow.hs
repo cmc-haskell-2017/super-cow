@@ -315,7 +315,7 @@ stopCow direct cow
 -- | Обновить состояние игровой вселенной 
 updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u
-  | negativeLifeBalance u = resetUniverse u
+  | negativeLifeBalance u = stopGame u
   | otherwise = updateLife dt (u
       { universeMap  = updateMap dt (universeMap u)
       , universeCow = updateCow dt (universeCow u)
@@ -329,9 +329,9 @@ negativeLifeBalance u = life <= 0
   where
     life = (universeLife u)
 
--- | Сбросить игру
-resetUniverse :: Universe -> Universe
-resetUniverse u = u
+-- | Остановить игру
+stopGame :: Universe -> Universe
+stopGame u = u
   
 -- | Обновление коровы
 updateCow :: Float -> Cow -> Cow
