@@ -26,9 +26,11 @@ loadImages = do
   Just badBirdDownPicture      <- loadJuicyPNG "images/BlueBirdDown.png"
   Just skyWithGrassPicture     <- loadJuicyJPG "images/SkyWithGrass.jpg"
   Just gameOver                <- loadJuicyPNG "images/GameOver.png"
+  Just cowBlurredPicture       <- loadJuicyPNG "images/cowBlurred.png"
 
   return Images
     { imageCow          = scale 1.0 1.0 cowPicture
+    , imageCowBlurred   = scale 1.0 1.0 cowBlurredPicture
     , imageClover       = scale 1.0 1.0 cloverPicture
     , imageGoodBirdUp   = scale 1.0 1.0 goodBirdUpPicture
     , imageGoodBirdDown = scale 1.0 1.0 goodBirdDownPicture
@@ -100,6 +102,7 @@ data Universe = Universe
 -- | Изображения объектов
 data Images = Images
   { imageCow             :: Picture   -- ^ Изображение коровы.
+  , imageCowBlurred      :: Picture   -- ^ Изображение размытой коровы.
   , imageClover          :: Picture   -- ^ Изображение клевера
   , imageGoodBirdUp      :: Picture   -- ^ Изображение GrayBirdUp.
   , imageGoodBirdDown    :: Picture   -- ^ Изображение GrayBirdDown.
@@ -174,7 +177,7 @@ drawUniverse :: Images -> Universe -> Picture
 drawUniverse images universe = pictures
   [ drawBackground (imageSkyWithGrass images)
   , drawObstacles images (universeMap universe)
-  , drawCow (imageCow images) (universeCow universe)
+  , drawCow (imageCow images, imageCowBlurred images) (universeCow universe)
   , drawScore (universeScore universe)
   , drawLife (universeLife universe)
   , drawGameOver (imageGameOver images) (universeGameOver universe)
@@ -199,8 +202,10 @@ drawObstacles images obstacles = pictures
   ]
 
 -- | Нарисовать корову 
-drawCow :: Picture -> Cow -> Picture
-drawCow image cow = translate x y (scale r r image)
+drawCow :: (Picture,Picture) -> Cow -> Picture
+drawCow (image, blurredImage) cow 
+  | collapsedTime cow > 0 = translate x y (scale r r blurredImage)
+  | otherwise = translate x y (scale r r image)
   where
     (x, y) = cowPosition cow
     r = cowSize cow
