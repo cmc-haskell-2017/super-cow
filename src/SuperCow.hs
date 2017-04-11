@@ -82,10 +82,11 @@ data Map = Map
 
 -- | Корова
 data Cow = Cow
-  { cowPosition   :: Position
-  , cowSize       :: Size
-  , cowSpeedUp    :: Speed  -- ^ Cкорость по вертикали 
-  , cowSpeedLeft  :: Speed  -- ^ Cкорость по горизонтали
+  { cowPosition  :: Position
+  , cowSize      :: Size
+  , cowSpeedUp   :: Speed  -- ^ Cкорость по вертикали 
+  , cowSpeedLeft :: Speed  -- ^ Cкорость по горизонтали
+  , cowAngel     :: Float  -- ^ Угол наклона
   , collapsedTime :: Float
   }
 
@@ -204,8 +205,8 @@ drawObstacles images obstacles = pictures
 -- | Нарисовать корову 
 drawCow :: (Picture,Picture) -> Cow -> Picture
 drawCow (image, blurredImage) cow 
-  | collapsedTime cow > 0 = translate x y (scale r r blurredImage)
-  | otherwise = translate x y (scale r r image)
+  | collapsedTime cow > 0 = rotate (cowAngel cow) (translate x y (scale r r blurredImage))
+  | otherwise = rotate (cowAngel cow) (translate x y (scale r r image))
   where
     (x, y) = cowPosition cow
     r = cowSize cow
@@ -304,19 +305,20 @@ initCow = Cow
   , cowSpeedUp = 0
   , cowSpeedLeft = 0
   , collapsedTime = 200
+  , cowAngel = 0
   }
 
 -- | Взаимодействия c игровой вселенной        
 -- | Обработчик событий игры
 handleUniverse :: Event -> Universe -> Universe
 handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateSpeedCow 
-  (goCowUpDown (subtract cowSpeed))
+  (goCowUpDown (subtract cowSpeed) (+cowAngelDefault))
 handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = updateSpeedCow 
-  (goCowUpDown (+cowSpeed))
+  (goCowUpDown (+cowSpeed) (subtract cowAngelDefault))
 handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = updateSpeedCow 
-  (goCowUpDown (+cowSpeed))
+  (goCowUpDown (+cowSpeed) (subtract cowAngelDefault))
 handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = updateSpeedCow 
-  (goCowUpDown (subtract cowSpeed))
+  (goCowUpDown (subtract cowSpeed) (+cowAngelDefault))
 handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = updateSpeedCow 
   (goCowLeftRight (+cowSpeed))
 handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = updateSpeedCow 
@@ -329,8 +331,10 @@ handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = toggleGame
 handleUniverse _ = id
 
 -- | Передвижение коровы вверх и вниз, если можно.
-goCowUpDown :: (Speed -> Speed) -> Cow -> Cow
-goCowUpDown f cow = cow { cowSpeedUp = f $ cowSpeedUp cow }
+goCowUpDown :: (Speed -> Speed) -> (Float -> Float) -> Cow -> Cow
+goCowUpDown f fAngel cow = cow { cowSpeedUp = f $ cowSpeedUp cow
+                               , cowAngel = fAngel $ cowAngel cow
+                               }
 
 -- | Передвижение коровы влево и вправо, если можно.
 goCowLeftRight :: (Speed -> Speed) -> Cow -> Cow
@@ -596,6 +600,9 @@ defaultCowSize = 1.1
 -- | Мзменение высоты коровы при нажатии на клавиши (в пикселях)
 cowSpeed :: Float
 cowSpeed = 200
+
+cowAngelDefault :: Float
+cowAngelDefault = -10
 
 -- | Положение коровы по горизонтали
 cowInitOffset :: Offset
