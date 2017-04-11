@@ -73,7 +73,9 @@ data Map = Map
   { mapGoodBirds  :: [GoodBird]
   , mapBadBirds   :: [BadBird]
   , mapClovers    :: [Clover]
-  , obstacleSpeed :: Speed
+  , obstacleSpeedGoodBird :: Speed
+  , obstacleSpeedBadBird :: Speed
+  , obstacleSpeedClover :: Speed
   }
 
 -- | Корова
@@ -272,7 +274,9 @@ initMap g = Map
   { mapGoodBirds = map initGoodBird goodBirdPositions
   , mapClovers = map initClover cloverPositions
   , mapBadBirds = map initBadBird badBirdPositions
-  , obstacleSpeed = gameSpeed
+  , obstacleSpeedGoodBird = originSpeedGoodBird
+  , obstacleSpeedBadBird = originSpeedBadBird
+  , obstacleSpeedClover = originSpeedClover
   }
   where
     (g1, g2) = split g
@@ -360,7 +364,11 @@ toggleGame u
     , universeLife = 3
     , universeScore = 0
     , universeGameOver = not gameOverFlag
-    , universeMap = map { obstacleSpeed = gameSpeed }
+    , universeMap = map 
+    { obstacleSpeedGoodBird = originSpeedGoodBird 
+    , obstacleSpeedBadBird = originSpeedBadBird
+    , obstacleSpeedClover = originSpeedClover
+    }
     , universeCow = cow { cowPosition = (cowInitOffset, cowInitHeight) }
     }
   where
@@ -389,12 +397,14 @@ updateCow dt c = c
 updateMap :: Float -> Map -> Map
 updateMap dt obstacleMap = obstacleMap
   { mapGoodBirds = updateObstacles dt (mapGoodBirds obstacleMap) 
-    (obstacleSpeed obstacleMap)
+    (obstacleSpeedGoodBird obstacleMap)
   , mapBadBirds = updateObstacles dt (mapBadBirds obstacleMap) 
-    (obstacleSpeed obstacleMap)
+    (obstacleSpeedBadBird obstacleMap)
   , mapClovers = updateObstacles dt (mapClovers obstacleMap) 
-    (obstacleSpeed obstacleMap)
-  , obstacleSpeed = obstacleSpeed obstacleMap + speedIncrease
+    (obstacleSpeedClover obstacleMap)
+  , obstacleSpeedGoodBird = obstacleSpeedGoodBird obstacleMap + speedIncrease
+  , obstacleSpeedBadBird = obstacleSpeedBadBird obstacleMap + speedIncrease
+  , obstacleSpeedClover = obstacleSpeedClover obstacleMap + speedIncrease
   }
 
 -- | Обновить препятствия игровой вселенной 
@@ -557,6 +567,15 @@ obstacleOffsetRange = (-(defaultOffset / 2), defaultOffset / 2)
 -- | Изначальная скорость движения игрока по вселенной - абсолютное изменение 
 gameSpeed :: Speed
 gameSpeed = 100
+
+originSpeedGoodBird :: Speed
+originSpeedGoodBird = 100
+
+originSpeedBadBird :: Speed
+originSpeedBadBird = 200
+
+originSpeedClover :: Speed
+originSpeedClover = 10
 
 -- | Величина ускорения игры
 speedIncrease :: Speed
