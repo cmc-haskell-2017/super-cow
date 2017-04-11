@@ -339,11 +339,11 @@ toggleGame u
   | universeLife u > 0 = u { universeStop = not stopFlag }
   | otherwise = u
     { universeStop = not stopFlag
-	, universeLife = 3
-	, universeScore = 0
-	, universeMap = map { obstacleSpeed = gameSpeed }
-	, universeCow = cow { cowPosition = (cowInitOffset, cowInitHeight) }
-	}
+    , universeLife = 3
+    , universeScore = 0
+    , universeMap = map { obstacleSpeed = gameSpeed }
+    , universeCow = cow { cowPosition = (cowInitOffset, cowInitHeight) }
+    }
   where
     stopFlag = (universeStop u)
     map = (universeMap u)
