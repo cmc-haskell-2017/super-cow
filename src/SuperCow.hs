@@ -26,9 +26,11 @@ loadImages = do
   Just badBirdDownPicture      <- loadJuicyPNG "images/BlueBirdDown.png"
   Just skyWithGrassPicture     <- loadJuicyJPG "images/SkyWithGrass.jpg"
   Just gameOver                <- loadJuicyPNG "images/GameOver.png"
+  Just cowBlurredPicture       <- loadJuicyPNG "images/cowBlurred.png"
 
   return Images
     { imageCow          = scale 1.0 1.0 cowPicture
+    , imageCowBlurred   = scale 1.0 1.0 cowBlurredPicture
     , imageClover       = scale 1.0 1.0 cloverPicture
     , imageGoodBirdUp   = scale 1.0 1.0 goodBirdUpPicture
     , imageGoodBirdDown = scale 1.0 1.0 goodBirdDownPicture
@@ -85,6 +87,7 @@ data Cow = Cow
   , cowSpeedUp   :: Speed  -- ^ Cкорость по вертикали 
   , cowSpeedLeft :: Speed  -- ^ Cкорость по горизонтали
   , cowAngel     :: Float  -- ^ Угол наклона
+  , collapsedTime :: Int
   }
 
 -- | Игровая вселенная
@@ -100,6 +103,7 @@ data Universe = Universe
 -- | Изображения объектов
 data Images = Images
   { imageCow             :: Picture   -- ^ Изображение коровы.
+  , imageCowBlurred      :: Picture   -- ^ Изображение размытой коровы.
   , imageClover          :: Picture   -- ^ Изображение клевера
   , imageGoodBirdUp      :: Picture   -- ^ Изображение GrayBirdUp.
   , imageGoodBirdDown    :: Picture   -- ^ Изображение GrayBirdDown.
@@ -174,7 +178,7 @@ drawUniverse :: Images -> Universe -> Picture
 drawUniverse images universe = pictures
   [ drawBackground (imageSkyWithGrass images)
   , drawObstacles images (universeMap universe)
-  , drawCow (imageCow images) (universeCow universe)
+  , drawCow (imageCow images, imageCowBlurred images) (universeCow universe)
   , drawScore (universeScore universe)
   , drawLife (universeLife universe)
   , drawGameOver (imageGameOver images) (universeGameOver universe)
@@ -199,8 +203,10 @@ drawObstacles images obstacles = pictures
   ]
 
 -- | Нарисовать корову 
-drawCow :: Picture -> Cow -> Picture
-drawCow image cow = rotate (cowAngel cow) (translate x y (scale r r image))
+drawCow :: (Picture,Picture) -> Cow -> Picture
+drawCow (image, blurredImage) cow 
+  | collapsedTime cow > 0 = rotate (cowAngel cow) (translate x y (scale r r blurredImage))
+  | otherwise = rotate (cowAngel cow) (translate x y (scale r r image))
   where
     (x, y) = cowPosition cow
     r = cowSize cow
@@ -299,6 +305,7 @@ initCow = Cow
   , cowSpeedUp = 0
   , cowSpeedLeft = 0
   , cowAngel = 0
+  , collapsedTime = 0
   }
 
 -- | Взаимодействия c игровой вселенной        
@@ -384,12 +391,15 @@ updateCow :: Float -> Cow -> Cow
 updateCow dt c = c 
   { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
   ,(max screenBottom (min screenTop (coordY - dy))))
+  , collapsedTime = updateCollaspsedTime (collapsedTime c) 
   }
   where
     coordX = fst (cowPosition c)
     coordY = snd (cowPosition c)
     dx  = dt * (cowSpeedLeft c)
     dy = dt * (cowSpeedUp c)
+    updateCollaspsedTime 0 = 0 
+    updateCollaspsedTime t = t - 1 
 
 
 -- | Обновить карту игровой вселенной 
@@ -424,17 +434,20 @@ updateScore _ score = score + 1
 -- | Обновить жизни
 updateLife :: Float -> Universe -> Universe
 updateLife _ u
+  | collisionMulti cow (mapClovers obstacleMap) = u 
+  { universeLife = (life + 1) 
+  , universeMap = collisionHandle obstacleMap cow
+  }
+  | collapsedTime cow > 0 = u
   | collisionMulti cow (mapGoodBirds obstacleMap) = u 
     { universeLife = (life - 1) 
     , universeMap = collisionHandle obstacleMap cow
+    , universeCow = cow { collapsedTime = defaultCollapseTime }
     }
   | collisionMulti cow (mapBadBirds obstacleMap) = u 
     { universeLife = (life - 2) 
     , universeMap = collisionHandle obstacleMap cow
-    }
-  | collisionMulti cow (mapClovers obstacleMap) = u 
-    { universeLife = (life + 1) 
-    , universeMap = collisionHandle obstacleMap cow
+    , universeCow = cow { collapsedTime = defaultCollapseTime }
     }
   | otherwise = u
   where
@@ -604,4 +617,7 @@ cowPictureSizeWidth _ = 133
 -- | Высота картинки коровы
 cowPictureSizeHeight :: Cow -> Size 
 cowPictureSizeHeight _ = 68
+
+defaultCollapseTime :: Int
+defaultCollapseTime = 200
         
