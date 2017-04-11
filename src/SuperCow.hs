@@ -285,35 +285,31 @@ initCow = Cow
 -- | Взаимодействия c игровой вселенной        
 -- | Обработчик событий игры
 handleUniverse :: Event -> Universe -> Universe
-handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateSpeedCow goUp
-handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = updateSpeedCow goDown
-handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = updateSpeedCow stopCow
-handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = updateSpeedCow stopCow
-handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = updateSpeedCow goLeft
-handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = updateSpeedCow goRight
-handleUniverse (EventKey (SpecialKey KeyLeft) Up _ _) = updateSpeedCow stopCow
-handleUniverse (EventKey (SpecialKey KeyRight) Up _ _) = updateSpeedCow stopCow
+handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateSpeedCow (goCow "up")
+handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = updateSpeedCow (goCow "down")
+handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = updateSpeedCow (stopCow "up")
+handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = updateSpeedCow (stopCow "down")
+handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = updateSpeedCow (goCow "left")
+handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = updateSpeedCow (goCow "right")
+handleUniverse (EventKey (SpecialKey KeyLeft) Up _ _) = updateSpeedCow (stopCow "left")
+handleUniverse (EventKey (SpecialKey KeyRight) Up _ _) = updateSpeedCow (stopCow "right")
 handleUniverse _ = id
 
 -- | Передвижение коровы вверх, если можно.
-goUp :: Cow -> Cow
-goUp cow = cow { cowSpeedUp = -cowSpeed }
-
--- | Передвижение коровы вниз, если можно.
-goDown :: Cow -> Cow
-goDown cow = cow { cowSpeedUp = cowSpeed }
-
--- | Передвижение коровы влево, если можно.
-goLeft :: Cow -> Cow
-goLeft cow = cow { cowSpeedLeft = cowSpeed }
-
--- | Передвижение коровы вправо, если можно.
-goRight :: Cow -> Cow
-goRight cow = cow { cowSpeedLeft = -cowSpeed }
+goCow :: String -> Cow -> Cow
+goCow direct cow 
+	| direct == "up" = cow { cowSpeedUp = cowSpeedUp cow - cowSpeed }
+	| direct == "down" = cow { cowSpeedUp = cowSpeedUp cow + cowSpeed }
+	| direct == "left" = cow { cowSpeedLeft = cowSpeedLeft cow + cowSpeed }
+	| direct == "right" = cow { cowSpeedLeft = cowSpeedLeft cow - cowSpeed }
 
 -- | Остановка коровы.
-stopCow :: Cow -> Cow
-stopCow cow = cow { cowSpeedUp = 0, cowSpeedLeft = 0}
+stopCow :: String -> Cow -> Cow
+stopCow direct cow  
+	| direct == "up" = cow { cowSpeedUp = cowSpeedUp cow + cowSpeed}
+	| direct == "down" = cow { cowSpeedUp = cowSpeedUp cow - cowSpeed}
+	| direct == "left" = cow { cowSpeedLeft = cowSpeedLeft cow - cowSpeed}
+	| otherwise = cow { cowSpeedLeft = cowSpeedLeft cow + cowSpeed}
     
 -- | Обновление игровой вселенной
 -- | Обновить состояние игровой вселенной 
