@@ -357,10 +357,14 @@ toggleGame u
     { universeStop = not stopFlag
     , universeLife = 3
     , universeScore = 0
-    , universeGameOver = not gameOverFlag 
+    , universeGameOver = not gameOverFlag
+    , universeMap = map { obstacleSpeed = gameSpeed }
+    , universeCow = cow { cowPosition = (cowInitOffset, cowInitHeight) }
     }
   where
     stopFlag = (universeStop u)
+    map = (universeMap u)
+    cow = (universeCow u)
     gameOverFlag = (universeGameOver u)
   
 -- | Обновление коровы
