@@ -78,10 +78,11 @@ data Map = Map
 
 -- | Корова
 data Cow = Cow
-  { cowPosition  :: Position
-  , cowSize      :: Size
-  , cowSpeedUp   :: Speed  -- ^ Cкорость по вертикали 
-  , cowSpeedLeft :: Speed  -- ^ Cкорость по горизонтали
+  { cowPosition   :: Position
+  , cowSize       :: Size
+  , cowSpeedUp    :: Speed  -- ^ Cкорость по вертикали 
+  , cowSpeedLeft  :: Speed  -- ^ Cкорость по горизонтали
+  , collapsedTime :: Int
   }
 
 -- | Игровая вселенная
@@ -293,6 +294,7 @@ initCow = Cow
   , cowSize = defaultCowSize
   , cowSpeedUp = 0
   , cowSpeedLeft = 0
+  , collapsedTime = 0
   }
 
 -- | Взаимодействия c игровой вселенной        
@@ -372,12 +374,15 @@ updateCow :: Float -> Cow -> Cow
 updateCow dt c = c 
   { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
   ,(max screenBottom (min screenTop (coordY - dy))))
+  , collapsedTime = updateCollaspsedTime (collapsedTime c) 
   }
   where
     coordX = fst (cowPosition c)
     coordY = snd (cowPosition c)
     dx  = dt * (cowSpeedLeft c)
     dy = dt * (cowSpeedUp c)
+    updateCollaspsedTime 0 = 0 
+    updateCollaspsedTime t = t - 1 
 
 
 -- | Обновить карту игровой вселенной 
@@ -410,17 +415,20 @@ updateScore _ score = score + 1
 -- | Обновить жизни
 updateLife :: Float -> Universe -> Universe
 updateLife _ u
+  | collisionMulti cow (mapClovers obstacleMap) = u 
+  { universeLife = (life + 1) 
+  , universeMap = collisionHandle obstacleMap cow
+  }
+  | collapsedTime cow > 0 = u
   | collisionMulti cow (mapGoodBirds obstacleMap) = u 
     { universeLife = (life - 1) 
     , universeMap = collisionHandle obstacleMap cow
+    , universeCow = cow { collapsedTime = defaultCollapseTime }
     }
   | collisionMulti cow (mapBadBirds obstacleMap) = u 
     { universeLife = (life - 2) 
     , universeMap = collisionHandle obstacleMap cow
-    }
-  | collisionMulti cow (mapClovers obstacleMap) = u 
-    { universeLife = (life + 1) 
-    , universeMap = collisionHandle obstacleMap cow
+    , universeCow = cow { collapsedTime = defaultCollapseTime }
     }
   | otherwise = u
   where
@@ -578,4 +586,7 @@ cowPictureSizeWidth _ = 133
 -- | Высота картинки коровы
 cowPictureSizeHeight :: Cow -> Size 
 cowPictureSizeHeight _ = 68
+
+defaultCollapseTime :: Int
+defaultCollapseTime = 200
         
