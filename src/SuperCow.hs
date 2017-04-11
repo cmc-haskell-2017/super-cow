@@ -25,6 +25,7 @@ loadImages = do
   Just badBirdUpPicture        <- loadJuicyPNG "images/BlueBirdUp.png"
   Just badBirdDownPicture      <- loadJuicyPNG "images/BlueBirdDown.png"
   Just skyWithGrassPicture     <- loadJuicyJPG "images/SkyWithGrass.jpg"
+  Just gameOver                <- loadJuicyPNG "images/GameOver.png"
 
   return Images
     { imageCow          = scale 1.0 1.0 cowPicture
@@ -34,6 +35,7 @@ loadImages = do
     , imageBadBirdUp    = scale 1.0 1.0 badBirdUpPicture
     , imageBadBirdDown  = scale 1.0 1.0 badBirdDownPicture
     , imageSkyWithGrass = scale 1.0 1.0 skyWithGrassPicture
+    , imageGameOver     = scale 1.0 1.0 gameOver
     }
 
 
@@ -89,6 +91,7 @@ data Universe = Universe
   , universeScore     :: Score  -- ^ Cчет
   , universeLife      :: Life   -- ^ Жизни
   , universeStop      :: Bool   -- ^ Флаг остановки игры
+  , universeGameOver  :: Bool   -- ^ Флаг окончания игры
   }
   
 -- | Изображения объектов
@@ -100,6 +103,7 @@ data Images = Images
   , imageBadBirdUp       :: Picture   -- ^ Изображение BlueBirdUp.
   , imageBadBirdDown     :: Picture   -- ^ Изображение BlueBirdDown.
   , imageSkyWithGrass    :: Picture   -- ^ Изображение Неба.
+  , imageGameOver        :: Picture   -- ^ Изображение конца игры.
   }
 
 
@@ -170,6 +174,7 @@ drawUniverse images universe = pictures
   , drawCow (imageCow images) (universeCow universe)
   , drawScore (universeScore universe)
   , drawLife (universeLife universe)
+  , drawGameOver (imageGameOver images) (universeGameOver universe)
   ]
 
 -- | Отобразить фон
@@ -220,6 +225,13 @@ draw image o = translate x y (scale r r image)
     (x, y) = getPosition o
     r = getSize o
 
+drawGameOver :: Picture -> Bool -> Picture
+drawGameOver _ False = blank
+drawGameOver image True = translate (-w) h (scale 1.0 1.0 image)
+  where 
+    w = 0
+    h = screenTop / 2
+
 -- | Инициализация вселенной 
 -- | Инициализировать игровую вселенную, используя генератор случайных значений
 initUniverse :: StdGen -> Universe
@@ -229,6 +241,7 @@ initUniverse g = Universe
   , universeScore = 0
   , universeLife  = 3
   , universeStop = False
+  , universeGameOver = False
   }
                 
 -- | Инициализировать клевер
@@ -336,14 +349,19 @@ negativeLifeBalance u = life <= 0
 -- | Изменить активность игры
 toggleGame :: Universe -> Universe
 toggleGame u 
-  | universeLife u > 0 = u { universeStop = not stopFlag }
+  | universeLife u > 0 = u 
+    { universeStop = not stopFlag
+    , universeGameOver = False
+    }
   | otherwise = u
     { universeStop = not stopFlag
     , universeLife = 3
     , universeScore = 0
+    , universeGameOver = not gameOverFlag 
     }
   where
     stopFlag = (universeStop u)
+    gameOverFlag = (universeGameOver u)
   
 -- | Обновление коровы
 updateCow :: Float -> Cow -> Cow
