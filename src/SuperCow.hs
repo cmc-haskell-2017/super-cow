@@ -295,6 +295,7 @@ handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = updateSpeedCow (goCow 
 handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = updateSpeedCow (goCow "right")
 handleUniverse (EventKey (SpecialKey KeyLeft) Up _ _) = updateSpeedCow (stopCow "left")
 handleUniverse (EventKey (SpecialKey KeyRight) Up _ _) = updateSpeedCow (stopCow "right")
+handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = toggleGame
 handleUniverse _ = id
 
 -- | Передвижение коровы вверх, если можно.
@@ -318,7 +319,7 @@ stopCow direct cow
 updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u
   | gameStopped == True = u
-  | negativeLifeBalance u = stopGame u
+  | negativeLifeBalance u = toggleGame u
   | otherwise = updateLife dt (u
       { universeMap  = updateMap dt (universeMap u)
       , universeCow = updateCow dt (universeCow u)
@@ -334,9 +335,11 @@ negativeLifeBalance u = life <= 0
   where
     life = (universeLife u)
 
--- | Остановить игру
-stopGame :: Universe -> Universe
-stopGame u = u { universeStop = True }
+-- | Изменить активность игры
+toggleGame :: Universe -> Universe
+toggleGame u = u { universeStop = not stopFlag }
+  where
+    stopFlag = (universeStop u)
   
 -- | Обновление коровы
 updateCow :: Float -> Cow -> Cow
