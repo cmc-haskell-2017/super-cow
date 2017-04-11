@@ -332,9 +332,13 @@ negativeLifeBalance u = life <= 0
 -- | Сбросить игру
 resetUniverse :: Universe -> Universe
 resetUniverse u = u
-  { universeScore = 0
+  { -- universeMap = map { obstacleSpeed = gameSpeed }
+    universeCow = initCow
+  , universeScore = 0
   , universeLife  = 3
   }
+  where
+    map = (universeMap u)
 
   
 -- | Обновление коровы
