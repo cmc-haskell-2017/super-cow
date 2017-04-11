@@ -314,13 +314,30 @@ stopCow direct cow
 -- | Обновление игровой вселенной
 -- | Обновить состояние игровой вселенной 
 updateUniverse :: Float -> Universe -> Universe
-updateUniverse dt u = updateLife dt (u
-  { universeMap  = updateMap dt (universeMap u)
-  , universeCow = updateCow dt (universeCow u)
-  , universeScore  = updateScore dt (universeScore u)
-  })
+updateUniverse dt u
+  | negativeLifeBalance u = resetUniverse u
+  | otherwise = updateLife dt (u
+      { universeMap  = updateMap dt (universeMap u)
+      , universeCow = updateCow dt (universeCow u)
+      , universeScore  = updateScore dt (universeScore u)
+      })
+
+
+-- | Проверка на конец игры
+negativeLifeBalance :: Universe -> Bool
+negativeLifeBalance u = life <= 0
+  where
+    life = (universeLife u)
+
+-- | Сбросить игру
+resetUniverse :: Universe -> Universe
+resetUniverse u = u
+  { universeScore = 0
+  , universeLife  = 3
+  }
+
   
--- | Обновленеи коровы
+-- | Обновление коровы
 updateCow :: Float -> Cow -> Cow
 updateCow dt c = c 
   { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
