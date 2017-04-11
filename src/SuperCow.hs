@@ -337,7 +337,13 @@ negativeLifeBalance u = life <= 0
 
 -- | Изменить активность игры
 toggleGame :: Universe -> Universe
-toggleGame u = u { universeStop = not stopFlag }
+toggleGame u 
+  | universeLife u > 0 = u { universeStop = not stopFlag }
+  | otherwise = u
+    { universeStop = not stopFlag
+	, universeLife = 3
+	, universeScore = 0
+	}
   where
     stopFlag = (universeStop u)
   
