@@ -86,7 +86,7 @@ data Cow = Cow
   , cowSize       :: Size
   , cowSpeedUp    :: Speed  -- ^ Cкорость по вертикали 
   , cowSpeedLeft  :: Speed  -- ^ Cкорость по горизонтали
-  , collapsedTime :: Int
+  , collapsedTime :: Float
   }
 
 -- | Игровая вселенная
@@ -303,7 +303,7 @@ initCow = Cow
   , cowSize = defaultCowSize
   , cowSpeedUp = 0
   , cowSpeedLeft = 0
-  , collapsedTime = 0
+  , collapsedTime = 200
   }
 
 -- | Взаимодействия c игровой вселенной        
@@ -431,7 +431,7 @@ updateScore _ score = score + 1
 updateLife :: Float -> Universe -> Universe
 updateLife _ u
   | collisionMulti cow (mapClovers obstacleMap) = u 
-  { universeLife = (life + 1) 
+  { universeLife = checkLife life
   , universeMap = collisionHandle obstacleMap cow
   }
   | collapsedTime cow > 0 = u
@@ -450,6 +450,8 @@ updateLife _ u
     life = (universeLife u)
     cow = (universeCow u)
     obstacleMap = (universeMap u)
+    checkLife 3 = 3
+    checkLife l = l + 1
 
 -- | Обновить скорость движения коровы
 updateSpeedCow :: (Cow -> Cow) -> Universe -> Universe
@@ -611,6 +613,5 @@ cowPictureSizeWidth _ = 133
 cowPictureSizeHeight :: Cow -> Size 
 cowPictureSizeHeight _ = 68
 
-defaultCollapseTime :: Int
+defaultCollapseTime :: Float
 defaultCollapseTime = 200
-        
