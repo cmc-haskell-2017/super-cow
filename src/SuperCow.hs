@@ -87,7 +87,9 @@ data Cow = Cow
   , cowSpeedUp   :: Speed  -- ^ Cкорость по вертикали 
   , cowSpeedLeft :: Speed  -- ^ Cкорость по горизонтали
   , cowAngel     :: Float  -- ^ Угол наклона
+  , cowSpeedAngel :: Float
   , collapsedTime :: Int
+  , cowPushed    :: Int
   }
 
 -- | Игровая вселенная
@@ -205,8 +207,8 @@ drawObstacles images obstacles = pictures
 -- | Нарисовать корову 
 drawCow :: (Picture,Picture) -> Cow -> Picture
 drawCow (image, blurredImage) cow 
-  | collapsedTime cow > 0 = rotate (cowAngel cow) (translate x y (scale r r blurredImage))
-  | otherwise = rotate (cowAngel cow) (translate x y (scale r r image))
+  | collapsedTime cow > 0 =  translate x y (rotate (cowAngel cow) (scale r r blurredImage))
+  | otherwise = translate x y (rotate (cowAngel cow) (scale r r image))
   where
     (x, y) = cowPosition cow
     r = cowSize cow
@@ -305,20 +307,22 @@ initCow = Cow
   , cowSpeedUp = 0
   , cowSpeedLeft = 0
   , cowAngel = 0
+  , cowSpeedAngel = 0
   , collapsedTime = 0
+  , cowPushed = 0
   }
 
 -- | Взаимодействия c игровой вселенной        
 -- | Обработчик событий игры
 handleUniverse :: Event -> Universe -> Universe
 handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateSpeedCow 
-  (goCowUpDown (subtract cowSpeed) (+cowAngelDefault))
+  (goCowUpDown (subtract cowSpeed) (+cowAngelDefault) 1)
 handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = updateSpeedCow 
-  (goCowUpDown (+cowSpeed) (subtract cowAngelDefault))
+  (goCowUpDown (+cowSpeed) (subtract cowAngelDefault) 2)
 handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = updateSpeedCow 
-  (goCowUpDown (+cowSpeed) (subtract cowAngelDefault))
+  (goCowUpDown (+cowSpeed) (subtract cowAngelDefault) 0)
 handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = updateSpeedCow 
-  (goCowUpDown (subtract cowSpeed) (+cowAngelDefault))
+  (goCowUpDown (subtract cowSpeed) (+cowAngelDefault) 0)
 handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = updateSpeedCow 
   (goCowLeftRight (+cowSpeed))
 handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = updateSpeedCow 
@@ -331,9 +335,10 @@ handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = toggleGame
 handleUniverse _ = id
 
 -- | Передвижение коровы вверх и вниз, если можно.
-goCowUpDown :: (Speed -> Speed) -> (Float -> Float) -> Cow -> Cow
-goCowUpDown f fAngel cow = cow { cowSpeedUp = f $ cowSpeedUp cow
-                               , cowAngel = fAngel $ cowAngel cow
+goCowUpDown :: (Speed -> Speed) -> (Float -> Float) -> Int -> Cow -> Cow
+goCowUpDown f fAngel flagPushed cow = cow { cowSpeedUp = f $ cowSpeedUp cow
+                               , cowSpeedAngel = fAngel $ cowSpeedAngel cow
+                               , cowPushed = flagPushed
                                }
 
 -- | Передвижение коровы влево и вправо, если можно.
@@ -391,13 +396,27 @@ updateCow :: Float -> Cow -> Cow
 updateCow dt c = c 
   { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
   ,(max screenBottom (min screenTop (coordY - dy))))
-  , collapsedTime = updateCollaspsedTime (collapsedTime c) 
+  , collapsedTime = updateCollaspsedTime (collapsedTime c)
+  , cowAngel = max minAngle (min maxAngle (cowAngel c + da)) 
   }
+  -- | cowPushed c == 1 = c 
+  -- { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
+  -- ,(max screenBottom (min screenTop (coordY - dy))))
+  -- , collapsedTime = updateCollaspsedTime (collapsedTime c)
+  -- , cowAngel = max 0 (min maxAngle (cowAngel c + da)) 
+  -- }
+  -- | cowPushed c == 2 = c 
+  -- { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
+  -- ,(max screenBottom (min screenTop (coordY - dy))))
+  -- , collapsedTime = updateCollaspsedTime (collapsedTime c)
+  -- , cowAngel = max minAngle (min 0 (cowAngel c + da)) 
+  -- }
   where
     coordX = fst (cowPosition c)
     coordY = snd (cowPosition c)
     dx  = dt * (cowSpeedLeft c)
     dy = dt * (cowSpeedUp c)
+    da = dt * (cowSpeedAngel c)
     updateCollaspsedTime 0 = 0 
     updateCollaspsedTime t = t - 1 
 
@@ -600,7 +619,13 @@ cowSpeed :: Float
 cowSpeed = 200
 
 cowAngelDefault :: Float
-cowAngelDefault = -10
+cowAngelDefault = -100
+
+maxAngle :: Float
+maxAngle = 10
+
+minAngle :: Float
+minAngle = -10
 
 -- | Положение коровы по горизонтали
 cowInitOffset :: Offset
