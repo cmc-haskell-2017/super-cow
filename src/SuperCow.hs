@@ -8,7 +8,8 @@ import Graphics.Gloss.Juicy
 runSuperCow :: Images -> IO ()
 runSuperCow images = do
   g <- newStdGen
-  play display bgColor fps (initUniverse g) (drawUniverse images) handleUniverse updateUniverse
+  play display bgColor fps (initUniverse g) (drawUniverse images) 
+    handleUniverse updateUniverse
   where
     display = InWindow "Super Cow" (screenWidth, screenHeight) (200, 200)
     bgColor = white   -- цвет фона
@@ -17,22 +18,22 @@ runSuperCow images = do
 -- | Загрузка изображений
 loadImages :: IO Images
 loadImages = do
-  Just cow                <- loadJuicyPNG "images/cow.png"
-  Just clover             <- loadJuicyPNG "images/clover.png"
-  Just good_bird_up       <- loadJuicyPNG "images/GrayBirdUp.png"
-  Just good_bird_down     <- loadJuicyPNG "images/GrayBirdDown.png"
-  Just bad_bird_up        <- loadJuicyPNG "images/BlueBirdUp.png"
-  Just bad_bird_down      <- loadJuicyPNG "images/BlueBirdDown.png"
-  Just sky_with_grass     <- loadJuicyJPG "images/SkyWithGrass.jpg"
+  Just cowPicture              <- loadJuicyPNG "images/cow.png"
+  Just cloverPicture           <- loadJuicyPNG "images/clover.png"
+  Just goodBirdUpPicture       <- loadJuicyPNG "images/GrayBirdUp.png"
+  Just goodBirdDownPicture     <- loadJuicyPNG "images/GrayBirdDown.png"
+  Just badBirdUpPicture        <- loadJuicyPNG "images/BlueBirdUp.png"
+  Just badBirdDownPicture      <- loadJuicyPNG "images/BlueBirdDown.png"
+  Just skyWithGrassPicture     <- loadJuicyJPG "images/SkyWithGrass.jpg"
 
   return Images
-    { imageCow          = scale 1.0 1.0 cow
-    , imageClover       = scale 1.0 1.0 clover
-    , imageGoodBirdUp   = scale 1.0 1.0 good_bird_up
-    , imageGoodBirdDown = scale 1.0 1.0 good_bird_down
-    , imageBadBirdUp    = scale 1.0 1.0 bad_bird_up
-    , imageBadBirdDown  = scale 1.0 1.0 bad_bird_down
-    , imageSkyWithGrass = scale 1.0 1.0 sky_with_grass
+    { imageCow          = scale 1.0 1.0 cowPicture
+    , imageClover       = scale 1.0 1.0 cloverPicture
+    , imageGoodBirdUp   = scale 1.0 1.0 goodBirdUpPicture
+    , imageGoodBirdDown = scale 1.0 1.0 goodBirdDownPicture
+    , imageBadBirdUp    = scale 1.0 1.0 badBirdUpPicture
+    , imageBadBirdDown  = scale 1.0 1.0 badBirdDownPicture
+    , imageSkyWithGrass = scale 1.0 1.0 skyWithGrassPicture
     }
 
 
@@ -181,9 +182,12 @@ drawBackground image = translate (-w) h (scale 1.0 1.0 image)
 -- | Отобразить все препятствия игровой вселенной, вмещающихся в экран 
 drawObstacles :: Images -> Map -> Picture
 drawObstacles images obstacles = pictures
-  [ pictures (map (draw (imageGoodBirdUp  images)) (cropInsideScreen (mapGoodBirds obstacles)))
-  , pictures (map (draw (imageBadBirdUp images)) (cropInsideScreen (mapBadBirds obstacles)))
-  , pictures (map (draw (imageClover  images)) (cropInsideScreen (mapClovers obstacles)))
+  [ pictures (map (draw (imageGoodBirdUp  images)) 
+    (cropInsideScreen (mapGoodBirds obstacles)))
+  , pictures (map (draw (imageBadBirdUp images)) 
+    (cropInsideScreen (mapBadBirds obstacles)))
+  , pictures (map (draw (imageClover  images)) 
+    (cropInsideScreen (mapClovers obstacles)))
   ]
 
 -- | Нарисовать корову 
@@ -196,12 +200,7 @@ drawCow image cow = translate x y (scale r r image)
 -- | Нарисовать счёт в левом верхнем углу экрана 
 drawScore :: Score -> Picture
 drawScore score = translate (-w) h (scale 30 30 (pictures
-  [ 
-  -- color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- ^ белая рамка
-  -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])  -- ^ чёрные внутренности
-  -- , 
-  translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show score))))     -- ^ красный счёт
-  ]))
+  [ translate 2 (-1.5) (scale 0.01 0.01 (color red (text (show score)))) ]))
   where
     w = fromIntegral screenWidth  / 2
     h = fromIntegral screenHeight / 2
@@ -209,11 +208,7 @@ drawScore score = translate (-w) h (scale 30 30 (pictures
 -- | Нарисовать жизни в правом верхнем углу экрана 
 drawLife :: Life -> Picture
 drawLife life = translate w h (scale 30 30 (pictures
-  [ --color white (polygon [ (0, 0), (0, -2), (6, -2), (6, 0) ])            -- ^ белая рамка
-  -- , color black (polygon [ (0, 0), (0, -1.9), (5.9, -1.9), (5.9, 0) ])   -- ^ чёрные внутренности
-  -- , 
-  translate (-2) (-1.5) (scale 0.01 0.01 (color red (text (show life))))    -- ^ красная жизнь
-  ]))
+  [ translate (-2) (-1.5) (scale 0.01 0.01 (color red (text (show life)))) ]))
   where
     w = fromIntegral screenWidth  / 2
     h = fromIntegral screenHeight / 2
@@ -260,9 +255,9 @@ initGoodBird position = GoodBird
 -- | Инициализировать карту препятствий 
 initMap :: StdGen -> Map
 initMap g = Map 
-  { mapGoodBirds = map initGoodBird positions_1
-  , mapClovers = map initClover positions_2
-  , mapBadBirds = map initBadBird positions_3
+  { mapGoodBirds = map initGoodBird goodBirdPositions
+  , mapClovers = map initClover cloverPositions
+  , mapBadBirds = map initBadBird badBirdPositions
   , obstacleSpeed = gameSpeed
   }
   where
@@ -271,9 +266,12 @@ initMap g = Map
     (g5, g6) = split g2
     (g7, g8) = split g3
     (g9, g10) = split g4
-    positions_1 = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g8)) (randomRs obstacleHeightRange g5)
-    positions_2 = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g9)) (randomRs obstacleHeightRange g6)
-    positions_3 = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] (randomRs obstacleOffsetRange g10)) (randomRs obstacleHeightRange g7)
+    goodBirdPositions = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] 
+      (randomRs obstacleOffsetRange g8)) (randomRs obstacleHeightRange g5)
+    cloverPositions = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] 
+      (randomRs obstacleOffsetRange g9)) (randomRs obstacleHeightRange g6)
+    badBirdPositions = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] 
+      (randomRs obstacleOffsetRange g10)) (randomRs obstacleHeightRange g7)
 
 -- | Инициализировать корову 
 initCow :: Cow
@@ -287,33 +285,33 @@ initCow = Cow
 -- | Взаимодействия c игровой вселенной        
 -- | Обработчик событий игры
 handleUniverse :: Event -> Universe -> Universe
-handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateSpeedCow (goCow "up")
-handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = updateSpeedCow (goCow "down")
-handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = updateSpeedCow (stopCow "up")
-handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = updateSpeedCow (stopCow "down")
-handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = updateSpeedCow (goCow "left")
-handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = updateSpeedCow (goCow "right")
-handleUniverse (EventKey (SpecialKey KeyLeft) Up _ _) = updateSpeedCow (stopCow "left")
-handleUniverse (EventKey (SpecialKey KeyRight) Up _ _) = updateSpeedCow (stopCow "right")
+handleUniverse (EventKey (SpecialKey KeyUp) Down _ _) = updateSpeedCow 
+  (goCowUpDown (subtract cowSpeed))
+handleUniverse (EventKey (SpecialKey KeyDown) Down _ _) = updateSpeedCow 
+  (goCowUpDown (+cowSpeed))
+handleUniverse (EventKey (SpecialKey KeyUp) Up _ _) = updateSpeedCow 
+  (goCowUpDown (+cowSpeed))
+handleUniverse (EventKey (SpecialKey KeyDown) Up _ _) = updateSpeedCow 
+  (goCowUpDown (subtract cowSpeed))
+handleUniverse (EventKey (SpecialKey KeyLeft) Down _ _) = updateSpeedCow 
+  (goCowLeftRight (+cowSpeed))
+handleUniverse (EventKey (SpecialKey KeyRight) Down _ _) = updateSpeedCow 
+  (goCowLeftRight (subtract cowSpeed))
+handleUniverse (EventKey (SpecialKey KeyLeft) Up _ _) = updateSpeedCow 
+  (goCowLeftRight (subtract cowSpeed))
+handleUniverse (EventKey (SpecialKey KeyRight) Up _ _) = updateSpeedCow 
+  (goCowLeftRight (+cowSpeed))
 handleUniverse (EventKey (SpecialKey KeySpace) Down _ _) = toggleGame
 handleUniverse _ = id
 
--- | Передвижение коровы вверх, если можно.
-goCow :: String -> Cow -> Cow
-goCow direct cow 
-	| direct == "up" = cow { cowSpeedUp = cowSpeedUp cow - cowSpeed }
-	| direct == "down" = cow { cowSpeedUp = cowSpeedUp cow + cowSpeed }
-	| direct == "left" = cow { cowSpeedLeft = cowSpeedLeft cow + cowSpeed }
-	| direct == "right" = cow { cowSpeedLeft = cowSpeedLeft cow - cowSpeed }
+-- | Передвижение коровы вверх и вниз, если можно.
+goCowUpDown :: (Speed -> Speed) -> Cow -> Cow
+goCowUpDown f cow = cow { cowSpeedUp = f $ cowSpeedUp cow }
 
--- | Остановка коровы.
-stopCow :: String -> Cow -> Cow
-stopCow direct cow  
-	| direct == "up" = cow { cowSpeedUp = cowSpeedUp cow + cowSpeed }
-	| direct == "down" = cow { cowSpeedUp = cowSpeedUp cow - cowSpeed }
-	| direct == "left" = cow { cowSpeedLeft = cowSpeedLeft cow - cowSpeed }
-	| otherwise = cow { cowSpeedLeft = cowSpeedLeft cow + cowSpeed }
-    
+-- | Передвижение коровы влево и вправо, если можно.
+goCowLeftRight :: (Speed -> Speed) -> Cow -> Cow
+goCowLeftRight f cow = cow { cowSpeedLeft = f $ cowSpeedLeft cow }
+
 -- | Обновление игровой вселенной
 -- | Обновить состояние игровой вселенной 
 updateUniverse :: Float -> Universe -> Universe
@@ -321,10 +319,10 @@ updateUniverse dt u
   | gameStopped == True = u
   | negativeLifeBalance u = toggleGame u
   | otherwise = updateLife dt (u
-      { universeMap  = updateMap dt (universeMap u)
-      , universeCow = updateCow dt (universeCow u)
-      , universeScore  = updateScore dt (universeScore u)
-      })
+    { universeMap  = updateMap dt (universeMap u)
+    , universeCow = updateCow dt (universeCow u)
+    , universeScore  = updateScore dt (universeScore u)
+    })
   where
     gameStopped = (universeStop u)
 
@@ -367,9 +365,12 @@ updateCow dt c = c
 -- | Обновить карту игровой вселенной 
 updateMap :: Float -> Map -> Map
 updateMap dt obstacleMap = obstacleMap
-  { mapGoodBirds = updateObstacles dt (mapGoodBirds obstacleMap) (obstacleSpeed obstacleMap)
-  , mapBadBirds = updateObstacles dt (mapBadBirds obstacleMap) (obstacleSpeed obstacleMap)
-  , mapClovers = updateObstacles dt (mapClovers obstacleMap) (obstacleSpeed obstacleMap)
+  { mapGoodBirds = updateObstacles dt (mapGoodBirds obstacleMap) 
+    (obstacleSpeed obstacleMap)
+  , mapBadBirds = updateObstacles dt (mapBadBirds obstacleMap) 
+    (obstacleSpeed obstacleMap)
+  , mapClovers = updateObstacles dt (mapClovers obstacleMap) 
+    (obstacleSpeed obstacleMap)
   , obstacleSpeed = obstacleSpeed obstacleMap + speedIncrease
   }
 
@@ -377,7 +378,8 @@ updateMap dt obstacleMap = obstacleMap
 updateObstacles :: Obstacle o => Float -> [o] -> Speed -> [o]
 updateObstacles _ [] _ = []
 updateObstacles dt obstacles speed = 
-  dropWhile (\o -> fst (getPosition o) < screenLeft) (map (\o -> setPosition o (coordX o - dx, coordY o)) obstacles)
+  dropWhile (\o -> fst (getPosition o) < screenLeft) 
+    (map (\o -> setPosition o (coordX o - dx, coordY o)) obstacles)
   where
     coordX = fst . getPosition
     coordY = snd . getPosition
@@ -415,7 +417,8 @@ updateSpeedCow f u = u { universeCow = f $ universeCow u }
 
 -- | Оставить только те препятствия, которые входят в экран 
 cropInsideScreen :: Obstacle o => [o] -> [o]
-cropInsideScreen obs = dropWhile (\o -> pos o < screenLeft) $ takeWhile (\o -> pos o < screenRight) obs
+cropInsideScreen obs = dropWhile (\o -> pos o < screenLeft) $ 
+  takeWhile (\o -> pos o < screenRight) obs
   where 
     pos = fst . getPosition
 
@@ -437,19 +440,26 @@ collisionMulti cow os = or (map (collides cow) (cropInsideScreen os))
 -- | Сталкивается ли корова с препятствием?
 collides :: Obstacle o => Cow -> o -> Bool
 collides cow o 
-  | crux >= oldx && cruy >= oldy && crdx >= oldx && crdy <= oldy && clux <= oldx && cluy >= oldy = True
-  | crdx >= olux && crdy <= oluy && crux >= olux && cruy >= oluy && cldx <= olux && cldy <= oluy = True
-  | crdx >= oldx && crdy >= oldy && crux >= olux && cruy <= oluy && clux <= olux && cluy >= oluy = True
+  | crux >= oldx && cruy >= oldy && crdx >= oldx && crdy <= oldy && 
+    clux <= oldx && cluy >= oldy = True
+  | crdx >= olux && crdy <= oluy && crux >= olux && cruy >= oluy && 
+    cldx <= olux && cldy <= oluy = True
+  | crdx >= oldx && crdy >= oldy && crux >= olux && cruy <= oluy && 
+    clux <= olux && cluy >= oluy = True
   | otherwise = False
   where
     (x1,y1) = cowPosition cow
     (x2,y2) = getPosition o
     s1 = cowSize cow
     s2 = getSize o
-    (clux, cluy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 + (cowPictureSizeHeight cow) / 2 * s1)
-    (cldx, cldy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 - (cowPictureSizeHeight cow) / 2 * s1)
-    (crux, cruy) = (x1 + (cowPictureSizeWidth cow) / 2 * s1, y1 + (cowPictureSizeHeight cow) / 2 * s1)
-    (crdx, crdy) = (x1 + (cowPictureSizeWidth cow) / 2 * s1, y1 - (cowPictureSizeHeight cow) / 2 * s1)
+    (clux, cluy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 + 
+      (cowPictureSizeHeight cow) / 2 * s1)
+    (cldx, cldy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 - 
+      (cowPictureSizeHeight cow) / 2 * s1)
+    (crux, cruy) = (x1 + (cowPictureSizeWidth cow) / 2 * s1, y1 + 
+      (cowPictureSizeHeight cow) / 2 * s1)
+    (crdx, crdy) = (x1 + (cowPictureSizeWidth cow) / 2 * s1, y1 - 
+      (cowPictureSizeHeight cow) / 2 * s1)
     (olux, oluy) = (x2 - (getWidth o) / 2 * s2, y2 + (getHeight o) / 2 * s2)
     (oldx, oldy) = (x2 - (getWidth o) / 2 * s2, y2 - (getHeight o) / 2 * s2)
     -- (orux, oruy) = (x2 + (getWidth o) / 2 * s2, y2 + (getHeight o) / 2 * s2)
@@ -458,9 +468,12 @@ collides cow o
 -- |  Удаления обьекта, с которым столкнулись
 collisionHandle :: Map -> Cow -> Map 
 collisionHandle m c = m 
-  { mapClovers = filter (not . collides c) (cropInsideScreen (mapClovers m))  ++ dropWhile isInsideScreen (mapClovers m) 
-  , mapBadBirds = filter (not . collides c) (cropInsideScreen (mapBadBirds m)) ++ dropWhile isInsideScreen (mapBadBirds m) 
-  , mapGoodBirds = filter (not . collides c) (cropInsideScreen (mapGoodBirds m)) ++ dropWhile isInsideScreen (mapGoodBirds m) 
+  { mapClovers = filter (not . collides c) (cropInsideScreen (mapClovers m)) ++ 
+   dropWhile isInsideScreen (mapClovers m) 
+  , mapBadBirds = filter (not . collides c) (cropInsideScreen (mapBadBirds m)) ++ 
+   dropWhile isInsideScreen (mapBadBirds m) 
+  , mapGoodBirds = filter (not . collides c) (cropInsideScreen (mapGoodBirds m)) ++ 
+   dropWhile isInsideScreen (mapGoodBirds m) 
   }
 
 -- | Константы, параметры игры

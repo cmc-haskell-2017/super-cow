@@ -6,5 +6,5 @@ import SuperCow
 
 main :: IO ()
 main = do
-	images <- loadImages
-	runSuperCow images
+  images <- loadImages
+  runSuperCow images
