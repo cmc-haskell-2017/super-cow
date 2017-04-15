@@ -80,6 +80,16 @@ data Map = Map
   , obstacleSpeedClover :: Speed
   }
 
+data BackgroundPicture = BackgroundPicture
+  { backgroundPicturePosition :: Position
+  -- , backgroundPictureSize :: Size
+  }
+
+data Background = Background
+  { mapBackgroundPicture :: [BackgroundPicture]
+  , backgroundPictureSpeed :: Speed
+  }
+
 -- | Корова
 data Cow = Cow
   { cowPosition  :: Position
@@ -100,6 +110,7 @@ data Universe = Universe
   , universeLife      :: Life   -- ^ Жизни
   , universeStop      :: Bool   -- ^ Флаг остановки игры
   , universeGameOver  :: Bool   -- ^ Флаг окончания игры
+  , universeBackground:: Background
   }
   
 -- | Изображения объектов
@@ -178,7 +189,7 @@ instance Obstacle GoodBird where
 -- | Отобразить игровую вселенную 
 drawUniverse :: Images -> Universe -> Picture
 drawUniverse images universe = pictures
-  [ drawBackground (imageSkyWithGrass images)
+  [ drawBackground (imageSkyWithGrass images) (universeBackground universe)
   , drawObstacles images (universeMap universe)
   , drawCow (imageCow images, imageCowBlurred images) (universeCow universe)
   , drawScore (universeScore universe)
@@ -186,12 +197,23 @@ drawUniverse images universe = pictures
   , drawGameOver (imageGameOver images) (universeGameOver universe)
   ]
 
--- | Отобразить фон
-drawBackground :: Picture -> Picture
-drawBackground image = translate (-w) h (scale 1.0 1.0 image)
+-- | Отобразить одну картинку фона
+drawBackgroundPicture :: Picture -> BackgroundPicture -> Picture
+drawBackgroundPicture image backgroundPicture = translate x y (scale 1.0 1.0 image)
   where 
-    w = fromIntegral screenWidth  / 2
-    h = fromIntegral screenHeight / 2
+    (x, y) = backgroundPicturePosition backgroundPicture
+
+-- | Отобразить фон
+drawBackground :: Picture -> Background -> Picture
+drawBackground image background = pictures (map 
+              (drawBackgroundPicture image)
+    (cropBackgroundInsideScreen (mapBackgroundPicture background)))
+
+-- drawBackground :: Picture -> Background -> Picture
+-- drawBackground image background = translate (-w) h (scale 1.0 1.0 image)
+--   where 
+--     w = fromIntegral screenWidth  / 2
+--     h = fromIntegral screenHeight / 2
     
 -- | Отобразить все препятствия игровой вселенной, вмещающихся в экран 
 drawObstacles :: Images -> Map -> Picture
@@ -253,6 +275,7 @@ initUniverse g = Universe
   , universeLife  = 3
   , universeStop = False
   , universeGameOver = False
+  , universeBackground = initBackground 
   }
                 
 -- | Инициализировать клевер
@@ -275,6 +298,20 @@ initGoodBird position = GoodBird
   { goodBirdPosition = position 
   , goodBirdSize = defaultGoodBirdSize
   }
+
+initBackgroundPicture :: Offset -> BackgroundPicture
+initBackgroundPicture offset = BackgroundPicture
+  { backgroundPicturePosition = (offset, screenTop)
+  -- , backgroundPictureSize = (2560, 1440)
+  }
+
+initBackground :: Background
+initBackground = Background
+  { mapBackgroundPicture = map initBackgroundPicture backgroundPicturePositions
+  , backgroundPictureSpeed = backgroundSpeed
+  }
+  where
+    backgroundPicturePositions = [screenLeft, screenLeft + 800 ..]
 
 -- | Инициализировать карту препятствий 
 initMap :: StdGen -> Map
@@ -355,6 +392,7 @@ updateUniverse dt u
     { universeMap  = updateMap dt (universeMap u)
     , universeCow = updateCow dt (universeCow u)
     , universeScore  = updateScore dt (universeScore u)
+    , universeBackground = updateBackground dt (universeBackground u)
     })
   where
     gameStopped = (universeStop u)
@@ -435,6 +473,23 @@ updateMap dt obstacleMap = obstacleMap
   , obstacleSpeedClover = obstacleSpeedClover obstacleMap + speedIncrease
   }
 
+updateBackground :: Float -> Background -> Background
+updateBackground dt background = background
+  { mapBackgroundPicture = updateBackgrounds dt (mapBackgroundPicture background)
+                            (backgroundPictureSpeed background)
+  }
+
+-- | Обновить фон
+updateBackgrounds :: Float -> [BackgroundPicture] -> Speed -> [BackgroundPicture] 
+updateBackgrounds _ [] _ = []
+updateBackgrounds dt backgrounds speed = 
+  dropWhile (\o -> fst (backgroundPicturePosition o) < screenLeft) 
+    (map (\o -> o { backgroundPicturePosition = (coordX o - dx, coordY o)}) backgrounds)
+  where
+    coordX = fst . backgroundPicturePosition
+    coordY = snd . backgroundPicturePosition
+    dx  = dt * speed
+
 -- | Обновить препятствия игровой вселенной 
 updateObstacles :: Obstacle o => Float -> [o] -> Speed -> [o]
 updateObstacles _ [] _ = []
@@ -482,11 +537,18 @@ updateSpeedCow f u = u { universeCow = f $ universeCow u }
 
 
 -- | Оставить только те препятствия, которые входят в экран 
-cropInsideScreen :: Obstacle o => [o] -> [o]
+cropInsideScreen :: (Obstacle o) => [o] -> [o]
 cropInsideScreen obs = dropWhile (\o -> pos o < screenLeft) $ 
   takeWhile (\o -> pos o < screenRight) obs
   where 
     pos = fst . getPosition
+
+-- | Оставить только те картинки фона, которые входят в экран 
+cropBackgroundInsideScreen :: [BackgroundPicture] -> [BackgroundPicture]
+cropBackgroundInsideScreen background = dropWhile (\o -> pos o < screenLeft) $ 
+  takeWhile (\o -> pos o < screenRight) background
+  where 
+    pos = fst . backgroundPicturePosition
 
 -- | Препятствия, которые не входят в экран
 isOutsideScreen :: Obstacle o => o -> Bool
@@ -592,6 +654,13 @@ defaultOffset = screenRight * 1.5
 -- | Диапазон, для вариации расстояния между препятсвтиями
 obstacleOffsetRange :: (Offset, Offset)
 obstacleOffsetRange = (-(defaultOffset / 2), defaultOffset / 2)
+
+-- | Скорость фона
+backgroundSpeed:: Speed
+backgroundSpeed = 20
+
+backgroundPictureSizeWidth :: Float
+backgroundPictureSizeWidth = 5000
 
 -- | Скорость игры
 -- | Изначальная скорость движения игрока по вселенной - абсолютное изменение 
