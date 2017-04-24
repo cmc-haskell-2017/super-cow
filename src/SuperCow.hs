@@ -27,6 +27,7 @@ loadImages = do
   Just skyWithGrassPicture     <- loadJuicyJPG "images/SkyWithGrass.jpg"
   Just gameOver                <- loadJuicyPNG "images/GameOver.png"
   Just cowBlurredPicture       <- loadJuicyPNG "images/cowBlurred.png"
+  Just donutPicture            <- loadJuicyPNG "images/donut.png"
 
   return Images
     { imageCow          = scale 1.0 1.0 cowPicture
@@ -38,6 +39,7 @@ loadImages = do
     , imageBadBirdDown  = scale 1.0 1.0 badBirdDownPicture
     , imageSkyWithGrass = scale 1.0 1.0 skyWithGrassPicture
     , imageGameOver     = scale 1.0 1.0 gameOver
+    , imageDonut        = scale 1.0 1.0 donutPicture
     }
 
 
@@ -68,6 +70,11 @@ data BadBird = BadBird
 data GoodBird = GoodBird 
   { goodBirdPosition :: Position
   , goodBirdSize     :: Size
+  }
+
+data Donut = Donut 
+  { donutPosition :: Position
+  , donutSize     :: Size
   }
 
 -- | Карта препятствий
@@ -101,6 +108,53 @@ data Cow = Cow
   , cowPushed    :: Int
   , collapsedTime :: Float
   }
+  
+data CowSizeChange = CowSizeChange
+  { sizeMultiplier :: Size
+  , time           :: Float
+  }
+  
+data BirdSpeedChange = BirdSpeedChange 
+  { BirdSpeedMultiplier :: Size 
+  , time :: Float
+  }
+
+data DonutGun = DonutGun
+  { DonutSpeed :: Speed
+  , AllDonuts :: [Donut] 
+  , time :: Float
+  , damage :: Float
+  }
+
+data NightmareMode = NightmareMode
+  { birdspeedmultiplier :: Speed
+  , time :: Float
+  }
+  
+data Invincible = Invincible
+  { time :: Float }
+  
+data Boss = Boss 
+  { bossHealth :: Float
+  , bossDamage :: Float
+  , bossHardness :: Float }
+  
+class Condition c where
+    timeLeft :: c -> Float
+    effect :: Universe -> c -> Universe
+    
+instance Condition CowSizeChange where
+    
+instance Condition BirdSpeedChange where
+
+instance Condition DonutGun where
+
+instance Condition NightmareMode where
+
+instance Condition Invincible where
+
+instance Condition Boss where
+
 
 -- | Игровая вселенная
 data Universe = Universe
@@ -111,6 +165,8 @@ data Universe = Universe
   , universeStop      :: Bool   -- ^ Флаг остановки игры
   , universeGameOver  :: Bool   -- ^ Флаг окончания игры
   , universeBackground:: Background
+  , universeCondition :: [Condition]
+  , universeHardness  :: Float 
   }
   
 -- | Изображения объектов
@@ -184,6 +240,19 @@ instance Obstacle GoodBird where
   getWidth _ = 67
   
   getHeight _ = 36
+  
+instance Obstacle Donut where 
+  getPosition = donutPosition 
+    
+  getSize = donutSize 
+
+  setPosition donut position = donut { donutPosition = position }
+
+  setSize donut size = donut { donutSize = size }
+
+  getWidth _ = 
+
+  getHeight _ = 
 
 -- | Отрисовка игровой вселенной
 -- | Отобразить игровую вселенную 
@@ -272,10 +341,11 @@ initUniverse g = Universe
   { universeMap = initMap g 
   , universeCow = initCow
   , universeScore = 0
-  , universeLife  = 3
+  , universeLife  = 5
   , universeStop = False
   , universeGameOver = False
   , universeBackground = initBackground 
+  , universeHardness = 1
   }
                 
 -- | Инициализировать клевер
@@ -388,15 +458,23 @@ updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u
   | gameStopped == True = u
   | negativeLifeBalance u = toggleGame u
-  | otherwise = updateLife dt (u
+  | otherwise = updateLife dt (applyCondition (u
     { universeMap  = updateMap dt (universeMap u)
     , universeCow = updateCow dt (universeCow u)
     , universeScore  = updateScore dt (universeScore u)
     , universeBackground = updateBackground dt (universeBackground u)
-    })
+    }))
   where
     gameStopped = (universeStop u)
 
+
+applyCondition :: Universe -> Universe
+
+applySingleCondition :: Condition -> Universe -> Universe
+
+toggleGameHardness :: Universe -> Int -> Universe
+
+toggleObstacleHardness :: Obstacle o => [o] -> (o -> o) -> [o]
 
 -- | Проверка на конец игры
 negativeLifeBalance :: Universe -> Bool
