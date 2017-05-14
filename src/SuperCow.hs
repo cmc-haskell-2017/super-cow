@@ -28,18 +28,28 @@ loadImages = do
   Just gameOver                <- loadJuicyPNG "images/GameOver.png"
   Just cowBlurredPicture       <- loadJuicyPNG "images/cowBlurred.png"
   Just donutPicture            <- loadJuicyPNG "images/donut.png"
+  Just donutStarPicture        <- loadJuicyPNG "images/DonutStar.png"
+  Just fasterStarPicture       <- loadJuicyPNG "images/FasterStar.png"
+  Just invincibleStarPicture   <- loadJuicyPNG "images/InvincibleStar.png"
+  Just randomStarPicture       <- loadJuicyPNG "images/RandomStar.png"
+  Just enlargeStarPicture      <- loadJuicyPNG "images/EnlargeStar.png"
 
   return Images
-    { imageCow          = scale 1.0 1.0 cowPicture
-    , imageCowBlurred   = scale 1.0 1.0 cowBlurredPicture
-    , imageClover       = scale 1.0 1.0 cloverPicture
-    , imageGoodBirdUp   = scale 1.0 1.0 goodBirdUpPicture
-    , imageGoodBirdDown = scale 1.0 1.0 goodBirdDownPicture
-    , imageBadBirdUp    = scale 1.0 1.0 badBirdUpPicture
-    , imageBadBirdDown  = scale 1.0 1.0 badBirdDownPicture
-    , imageSkyWithGrass = scale 1.0 1.0 skyWithGrassPicture
-    , imageGameOver     = scale 1.0 1.0 gameOver
-    , imageDonut        = scale 1.0 1.0 donutPicture
+    { imageCow               = scale 1.0 1.0 cowPicture
+    , imageCowBlurred        = scale 1.0 1.0 cowBlurredPicture
+    , imageClover            = scale 1.0 1.0 cloverPicture
+    , imageGoodBirdUp        = scale 1.0 1.0 goodBirdUpPicture
+    , imageGoodBirdDown      = scale 1.0 1.0 goodBirdDownPicture
+    , imageBadBirdUp         = scale 1.0 1.0 badBirdUpPicture
+    , imageBadBirdDown       = scale 1.0 1.0 badBirdDownPicture
+    , imageSkyWithGrass      = scale 1.0 1.0 skyWithGrassPicture
+    , imageGameOver          = scale 1.0 1.0 gameOver
+    , imageDonut             = scale 1.0 1.0 donutPicture
+    , imageDonutStar         = scale 0.1 0.1 donutStarPicture
+    , imageFasterStar        = scale 0.1 0.1 fasterStarPicture
+    , imageInvincibleStar    = scale 0.1 0.1 invincibleStarPicture
+    , imageRandomStar        = scale 0.1 0.1 randomStarPicture
+    , imageEnlargeStar       = scale 0.1 0.1 enlargeStarPicture
     }
 
 
@@ -71,6 +81,12 @@ data GoodBird = GoodBird
   { goodBirdPosition :: Position
   , goodBirdSize     :: Size
   }
+  
+data BonusItem = BonusItem 
+  { bonusItemPosition :: Position
+  , bonusItemSize     :: Size
+  , bonusItemType     :: BonusType
+  }
 
 data Donut = Donut 
   { donutPosition :: Position
@@ -82,9 +98,11 @@ data Map = Map
   { mapGoodBirds  :: [GoodBird]
   , mapBadBirds   :: [BadBird]
   , mapClovers    :: [Clover]
+  , mapBonusItems      :: [BonusItem]
   , obstacleSpeedGoodBird :: Speed
   , obstacleSpeedBadBird :: Speed
   , obstacleSpeedClover :: Speed
+  , obstacleSpeedBonusItem :: Speed
   }
 
 data BackgroundPicture = BackgroundPicture
@@ -106,67 +124,56 @@ data Cow = Cow
   , cowAngel     :: Float  -- ^ Угол наклона
   , cowSpeedAngel :: Float
   , cowPushed    :: Int
-  , collapsedTime :: Float
+  , cowBonus     :: Bonus
   }
   
 data CowSizeChange = CowSizeChange
-  { sizeMultiplier :: Size
-  , time           :: Float
-  }
+  { sizeMultiplier    :: Size
+  , sizeChangeTime :: Float
+  } deriving Eq
   
 data BirdSpeedChange = BirdSpeedChange 
-  { BirdSpeedMultiplier :: Size 
-  , time :: Float
+  { birdSpeedMultiplier :: Size 
+  , birdSpeedChangetime :: Float
   }
 
 data DonutGun = DonutGun
-  { DonutSpeed :: Speed
-  , AllDonuts :: [Donut] 
-  , time :: Float
+  { donutSpeed :: Speed
+  , allDonuts :: [Donut] 
+  , donutGuntime :: Float
   , damage :: Float
   }
 
-data NightmareMode = NightmareMode
-  { birdspeedmultiplier :: Speed
-  , time :: Float
-  }
-  
 data Invincible = Invincible
-  { time :: Float }
+  { invincibleTime :: Float
+  , invincibleLife :: Life
+  } deriving Eq
   
 data Boss = Boss 
   { bossHealth :: Float
   , bossDamage :: Float
   , bossHardness :: Float }
   
-class Condition c where
-    timeLeft :: c -> Float
-    effect :: Universe -> c -> Universe
+data Mode = BossMode Boss | NightmareMode Float | OrdinaryMode Float
+
+data BonusType = Inv | SizeChange
+
+data Bonus = InvincibleBonus Invincible 
+  | CowSizeChangeBonus CowSizeChange
+  | NoBonus 
+  deriving Eq
     
-instance Condition CowSizeChange where
-    
-instance Condition BirdSpeedChange where
-
-instance Condition DonutGun where
-
-instance Condition NightmareMode where
-
-instance Condition Invincible where
-
-instance Condition Boss where
-
-
 -- | Игровая вселенная
 data Universe = Universe
-  { universeMap       :: Map    -- ^ Препятствия игровой вселенной
-  , universeCow       :: Cow    -- ^ Корова
-  , universeScore     :: Score  -- ^ Cчет
-  , universeLife      :: Life   -- ^ Жизни
-  , universeStop      :: Bool   -- ^ Флаг остановки игры
-  , universeGameOver  :: Bool   -- ^ Флаг окончания игры
-  , universeBackground:: Background
-  , universeCondition :: [Condition]
-  , universeHardness  :: Float 
+  { universeMap        :: Map    -- ^ Препятствия игровой вселенной
+  , universeCow        :: Cow    -- ^ Корова
+  , universeScore      :: Score  -- ^ Cчет
+  , universeLife       :: Life   -- ^ Жизни
+  , universeStop       :: Bool   -- ^ Флаг остановки игры
+  , universeGameOver   :: Bool   -- ^ Флаг окончания игры
+  , universeBackground :: Background
+  -- , universeCowBonus   :: Bonus
+  , universeMode       :: Mode 
   }
   
 -- | Изображения объектов
@@ -180,6 +187,12 @@ data Images = Images
   , imageBadBirdDown     :: Picture   -- ^ Изображение BlueBirdDown.
   , imageSkyWithGrass    :: Picture   -- ^ Изображение Неба.
   , imageGameOver        :: Picture   -- ^ Изображение конца игры.
+  , imageDonut           :: Picture
+  , imageDonutStar       :: Picture  
+  , imageFasterStar      :: Picture  
+  , imageInvincibleStar  :: Picture  
+  , imageRandomStar      :: Picture  
+  , imageEnlargeStar     :: Picture
   }
 
 
@@ -212,6 +225,19 @@ instance Obstacle Clover where
   getHeight _ = 50
   
   getWidth _ = 50
+
+instance Obstacle BonusItem where    
+  getPosition = bonusItemPosition
+  
+  getSize = bonusItemSize
+  
+  setPosition bonusItem position = bonusItem { bonusItemPosition = position }
+  
+  setSize bonusItem size = bonusItem { bonusItemSize = size }
+  
+  getHeight _ = 68
+  
+  getWidth _ = 68
 
 -- | Препятствие - плохая птичка
 instance Obstacle BadBird where
@@ -250,9 +276,9 @@ instance Obstacle Donut where
 
   setSize donut size = donut { donutSize = size }
 
-  getWidth _ = 
+  getWidth _ = 67
 
-  getHeight _ = 
+  getHeight _ = 36
 
 -- | Отрисовка игровой вселенной
 -- | Отобразить игровую вселенную 
@@ -260,7 +286,7 @@ drawUniverse :: Images -> Universe -> Picture
 drawUniverse images universe = pictures
   [ drawBackground (imageSkyWithGrass images) (universeBackground universe)
   , drawObstacles images (universeMap universe)
-  , drawCow (imageCow images, imageCowBlurred images) (universeCow universe)
+  , drawCow images (universeCow universe) 
   , drawScore (universeScore universe)
   , drawLife (universeLife universe)
   , drawGameOver (imageGameOver images) (universeGameOver universe)
@@ -291,18 +317,30 @@ drawObstacles images obstacles = pictures
     (cropInsideScreen (mapGoodBirds obstacles)))
   , pictures (map (draw (imageBadBirdUp images)) 
     (cropInsideScreen (mapBadBirds obstacles)))
-  , pictures (map (draw (imageClover  images)) 
+  , pictures (map (draw (imageClover images)) 
     (cropInsideScreen (mapClovers obstacles)))
+  , pictures (map (\bi -> drawBonusItem images bi (bonusItemType bi)) 
+    (cropInsideScreen (mapBonusItems obstacles)))
   ]
 
 -- | Нарисовать корову 
-drawCow :: (Picture,Picture) -> Cow -> Picture
-drawCow (image, blurredImage) cow 
-  | collapsedTime cow > 0 =  translate x y (rotate (cowAngel cow) (scale r r blurredImage))
-  | otherwise = translate x y (rotate (cowAngel cow) (scale r r image))
-  where
-    (x, y) = cowPosition cow
-    r = cowSize cow
+drawCow :: Images -> Cow -> Picture
+drawCow images cow 
+  | cowBonus cow == NoBonus = translate x y (rotate (cowAngel cow) (scale r r (imageCow images)))
+  | otherwise = drawCowWithBonus images cow (cowBonus cow)
+    where
+        (x, y) = cowPosition cow
+        r = cowSize cow
+
+uncurry :: (a -> b -> c) -> (a, b) -> 
+drawCowWithBonus :: Images -> Cow -> Bonus -> Picture
+drawCowWithBonus images cow (InvincibleBonus i)
+  = translate (fst (cowPosition cow)) (snd (cowPosition cow)) (rotate (cowAngel cow) (scale (cowSize cow) (cowSize cow) (imageCowBlurred images)))
+drawCowWithBonus images cow (CowSizeChangeBonus i)
+  = translate (fst (cowPosition cow)) (snd (cowPosition cow)) (rotate (cowAngel cow) (scale newCowSize newCowSize (imageCow images)))
+    where 
+      newCowSize = (cowSize cow) * (sizeMultiplier i)
+      
 
 -- | Нарисовать счёт в левом верхнем углу экрана 
 drawScore :: Score -> Picture
@@ -326,6 +364,10 @@ draw image o = translate x y (scale r r image)
   where
     (x, y) = getPosition o
     r = getSize o
+    
+drawBonusItem :: Images -> BonusItem -> BonusType -> Picture
+drawBonusItem i bi Inv = draw (imageInvincibleStar i) bi 
+drawBonusItem i bi SizeChange = draw (imageEnlargeStar i) bi 
 
 drawGameOver :: Picture -> Bool -> Picture
 drawGameOver _ False = blank
@@ -338,14 +380,15 @@ drawGameOver image True = translate (-w) h (scale 1.0 1.0 image)
 -- | Инициализировать игровую вселенную, используя генератор случайных значений
 initUniverse :: StdGen -> Universe
 initUniverse g = Universe
-  { universeMap = initMap g 
+  { universeMap = moveObstacles (initMap g) 1000
   , universeCow = initCow
   , universeScore = 0
   , universeLife  = 5
   , universeStop = False
   , universeGameOver = False
   , universeBackground = initBackground 
-  , universeHardness = 1
+  , universeMode = OrdinaryMode 1
+  -- , universeCowBonus = NoBonus
   }
                 
 -- | Инициализировать клевер
@@ -369,6 +412,13 @@ initGoodBird position = GoodBird
   , goodBirdSize = defaultGoodBirdSize
   }
 
+intToBonusType :: Int -> BonusType 
+intToBonusType 1 = Inv
+intToBonusType 2 = SizeChange
+
+initBonusItem :: (Position, BonusType) -> BonusItem 
+initBonusItem (p, bt) = BonusItem { bonusItemPosition = p, bonusItemType = bt, bonusItemSize = defaultBonusItemSize }
+
 initBackgroundPicture :: Offset -> BackgroundPicture
 initBackgroundPicture offset = BackgroundPicture
   { backgroundPicturePosition = (offset, screenTop)
@@ -389,9 +439,11 @@ initMap g = Map
   { mapGoodBirds = map initGoodBird goodBirdPositions
   , mapClovers = map initClover cloverPositions
   , mapBadBirds = map initBadBird badBirdPositions
+  , mapBonusItems = map initBonusItem bonusItemTypePositions
   , obstacleSpeedGoodBird = originSpeedGoodBird
   , obstacleSpeedBadBird = originSpeedBadBird
   , obstacleSpeedClover = originSpeedClover
+  , obstacleSpeedBonusItem = originSpeedBonusItem
   }
   where
     (g1, g2) = split g
@@ -399,12 +451,18 @@ initMap g = Map
     (g5, g6) = split g2
     (g7, g8) = split g3
     (g9, g10) = split g4
+    (g11, g12) = split g5
+    (g13, g14) = split g6
     goodBirdPositions = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] 
-      (randomRs obstacleOffsetRange g8)) (randomRs obstacleHeightRange g5)
+      (randomRs obstacleOffsetRange g14)) (randomRs obstacleHeightRange g7)
     cloverPositions = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] 
-      (randomRs obstacleOffsetRange g9)) (randomRs obstacleHeightRange g6)
+      (randomRs obstacleOffsetRange g8)) (randomRs obstacleHeightRange g9)
     badBirdPositions = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] 
-      (randomRs obstacleOffsetRange g10)) (randomRs obstacleHeightRange g7)
+      (randomRs obstacleOffsetRange g10)) (randomRs obstacleHeightRange g11)
+    bonusItemTypePositions = zip 
+      (zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..] 
+      (randomRs obstacleOffsetRange g12)) (randomRs obstacleHeightRange g13))
+      (map intToBonusType (randomRs typeRange g))
 
 -- | Инициализировать корову 
 initCow :: Cow
@@ -413,10 +471,10 @@ initCow = Cow
   , cowSize = defaultCowSize
   , cowSpeedUp = 0
   , cowSpeedLeft = 0
-  , collapsedTime = 200
   , cowAngel = 0
   , cowSpeedAngel = 0
   , cowPushed = 0
+  , cowBonus = InvincibleBonus Invincible { invincibleTime = 200, invincibleLife = 5 }
   }
 
 -- | Взаимодействия c игровой вселенной        
@@ -458,7 +516,7 @@ updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u
   | gameStopped == True = u
   | negativeLifeBalance u = toggleGame u
-  | otherwise = updateLife dt (applyCondition (u
+  | otherwise = applyBonus (cowBonus (universeCow u)) (updateLife dt (u
     { universeMap  = updateMap dt (universeMap u)
     , universeCow = updateCow dt (universeCow u)
     , universeScore  = updateScore dt (universeScore u)
@@ -468,13 +526,29 @@ updateUniverse dt u
     gameStopped = (universeStop u)
 
 
-applyCondition :: Universe -> Universe
+updateBonus :: Float -> Bonus -> Bonus 
+updateBonus dt (InvincibleBonus i) 
+  | invincibleTime i > 1 = InvincibleBonus i { invincibleTime = invincibleTime i - 1 }
+updateBonus dt (CowSizeChangeBonus csb)
+  | sizeChangeTime csb > 1 = CowSizeChangeBonus csb { sizeChangeTime = sizeChangeTime csb - 1 }
+updateBonus dt b = NoBonus
 
-applySingleCondition :: Condition -> Universe -> Universe
+updateCow (updateBonus f) u
 
+applyBonus :: Universe -> Universe
+applyBonus u = case cowBonus (cow u) of
+  InvincibleBonus i -> ...
+  
+applyBonus _ u = u
+  
+-- addBonus :: Universe -> Bonus -> Universe
+-- addBonus 
+      
 toggleGameHardness :: Universe -> Int -> Universe
+toggleGameHardness u _ = u
 
 toggleObstacleHardness :: Obstacle o => [o] -> (o -> o) -> [o]
+toggleObstacleHardness os _ = os
 
 -- | Проверка на конец игры
 negativeLifeBalance :: Universe -> Bool
@@ -491,19 +565,22 @@ toggleGame u
     }
   | otherwise = u
     { universeStop = not stopFlag
-    , universeLife = 3
+    , universeLife = 5
     , universeScore = 0
     , universeGameOver = not gameOverFlag
-    , universeMap = map 
+    , universeMap = moveObstacles m 
     { obstacleSpeedGoodBird = originSpeedGoodBird 
     , obstacleSpeedBadBird = originSpeedBadBird
     , obstacleSpeedClover = originSpeedClover
+    } 1000
+    , universeCow = cow 
+    { cowPosition = (cowInitOffset, cowInitHeight)
+    , cowBonus = InvincibleBonus Invincible { invincibleLife = 5, invincibleTime = defaultCollapseTime }                
     }
-    , universeCow = cow { cowPosition = (cowInitOffset, cowInitHeight) }
     }
   where
     stopFlag = (universeStop u)
-    map = (universeMap u)
+    m = (universeMap u)
     cow = (universeCow u)
     gameOverFlag = (universeGameOver u)
   
@@ -512,29 +589,15 @@ updateCow :: Float -> Cow -> Cow
 updateCow dt c = c 
   { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
   ,(max screenBottom (min screenTop (coordY - dy))))
-  , collapsedTime = updateCollaspsedTime (collapsedTime c)
+  , cowBonus = updateBonus dt (cowBonus c)
   , cowAngel = max minAngle (min maxAngle (cowAngel c + da)) 
   }
-  -- | cowPushed c == 1 = c 
-  -- { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
-  -- ,(max screenBottom (min screenTop (coordY - dy))))
-  -- , collapsedTime = updateCollaspsedTime (collapsedTime c)
-  -- , cowAngel = max 0 (min maxAngle (cowAngel c + da)) 
-  -- }
-  -- | cowPushed c == 2 = c 
-  -- { cowPosition = ((max screenLeft (min screenRight (coordX - dx))) 
-  -- ,(max screenBottom (min screenTop (coordY - dy))))
-  -- , collapsedTime = updateCollaspsedTime (collapsedTime c)
-  -- , cowAngel = max minAngle (min 0 (cowAngel c + da)) 
-  -- }
   where
     coordX = fst (cowPosition c)
     coordY = snd (cowPosition c)
     dx  = dt * (cowSpeedLeft c)
     dy = dt * (cowSpeedUp c)
     da = dt * (cowSpeedAngel c)
-    updateCollaspsedTime 0 = 0 
-    updateCollaspsedTime t = t - 1 
 
 
 -- | Обновить карту игровой вселенной 
@@ -546,9 +609,12 @@ updateMap dt obstacleMap = obstacleMap
     (obstacleSpeedBadBird obstacleMap)
   , mapClovers = updateObstacles dt (mapClovers obstacleMap) 
     (obstacleSpeedClover obstacleMap)
+  , mapBonusItems = updateObstacles dt (mapBonusItems obstacleMap) 
+    (obstacleSpeedBonusItem obstacleMap)
   , obstacleSpeedGoodBird = obstacleSpeedGoodBird obstacleMap + speedIncrease
   , obstacleSpeedBadBird = obstacleSpeedBadBird obstacleMap + speedIncrease
   , obstacleSpeedClover = obstacleSpeedClover obstacleMap + speedIncrease
+  , obstacleSpeedBonusItem = obstacleSpeedBonusItem obstacleMap + speedIncrease
   }
 
 updateBackground :: Float -> Background -> Background
@@ -590,24 +656,36 @@ updateLife _ u
   { universeLife = checkLife life
   , universeMap = collisionHandle obstacleMap cow
   }
-  | collapsedTime cow > 0 = u
   | collisionMulti cow (mapGoodBirds obstacleMap) = u 
     { universeLife = (life - 1) 
     , universeMap = collisionHandle obstacleMap cow
-    , universeCow = cow { collapsedTime = defaultCollapseTime }
+    , universeCow = cow { cowBonus = tryAddInvincibleBonus (cowBonus cow) 1 }
     }
   | collisionMulti cow (mapBadBirds obstacleMap) = u 
     { universeLife = (life - 2) 
     , universeMap = collisionHandle obstacleMap cow
-    , universeCow = cow { collapsedTime = defaultCollapseTime }
+    , universeCow = cow { cowBonus = tryAddInvincibleBonus (cowBonus cow) 2 }
+    }
+  | collisionMulti cow (mapBonusItems obstacleMap) = u 
+    { universeMap = collisionHandle obstacleMap cow
+    , universeCow = cow { cowBonus = initBonus (bonusItemType (getCollisionObstacle cow (mapBonusItems obstacleMap))) u }
     }
   | otherwise = u
   where
     life = (universeLife u)
     cow = (universeCow u)
     obstacleMap = (universeMap u)
-    checkLife 3 = 3
+    checkLife 5 = 5
     checkLife l = l + 1
+    tryAddInvincibleBonus (InvincibleBonus i) _ = InvincibleBonus i
+    tryAddInvincibleBonus _ n = InvincibleBonus Invincible 
+      { invincibleTime = defaultCollapseTime 
+      , invincibleLife = (life - n)
+      }
+    
+initBonus :: BonusType -> Universe -> Bonus
+initBonus Inv u = InvincibleBonus Invincible { invincibleTime = 200, invincibleLife = universeLife u }
+initBonus SizeChange u = CowSizeChangeBonus CowSizeChange { sizeChangeTime = 200, sizeMultiplier = 1.5 }
 
 -- | Обновить скорость движения коровы
 updateSpeedCow :: (Cow -> Cow) -> Universe -> Universe
@@ -643,6 +721,10 @@ isInsideScreen o = pos o < screenRight && pos o > screenLeft
 collisionMulti :: Obstacle o => Cow -> [o] -> Bool
 collisionMulti cow os = or (map (collides cow) (cropInsideScreen os)) 
 
+
+getCollisionObstacle :: Obstacle o => Cow -> [o] -> o
+getCollisionObstacle cow os = (filter (collides cow) (cropInsideScreen os)) !! 0 
+ 
 -- | Сталкивается ли корова с препятствием?
 collides :: Obstacle o => Cow -> o -> Bool
 collides cow o 
@@ -656,7 +738,7 @@ collides cow o
   where
     (x1,y1) = cowPosition cow
     (x2,y2) = getPosition o
-    s1 = cowSize cow
+    s1 = currentCowSize (cowSize cow) (cowBonus cow)
     s2 = getSize o
     (clux, cluy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 + 
       (cowPictureSizeHeight cow) / 2 * s1)
@@ -671,17 +753,35 @@ collides cow o
     -- (orux, oruy) = (x2 + (getWidth o) / 2 * s2, y2 + (getHeight o) / 2 * s2)
     -- (ordx, ordy) = (x2 + (getWidth o) / 2 * s2, y2 - (getHeight o) / 2 * s2)
 
+currentCowSize :: Size -> Bonus -> Size 
+currentCowSize s (CowSizeChangeBonus csb) = s * (sizeMultiplier csb)
+currentCowSize s _ = s 
+
 -- |  Удаления обьекта, с которым столкнулись
 collisionHandle :: Map -> Cow -> Map 
 collisionHandle m c = m 
-  { mapClovers = filter (not . collides c) (cropInsideScreen (mapClovers m)) ++ 
+  { mapClovers = filter (collidesVary (cowBonus c)) (cropInsideScreen (mapClovers m)) ++ 
    dropWhile isInsideScreen (mapClovers m) 
-  , mapBadBirds = filter (not . collides c) (cropInsideScreen (mapBadBirds m)) ++ 
+  , mapBadBirds = filter (collidesVary (cowBonus c)) (cropInsideScreen (mapBadBirds m)) ++ 
    dropWhile isInsideScreen (mapBadBirds m) 
-  , mapGoodBirds = filter (not . collides c) (cropInsideScreen (mapGoodBirds m)) ++ 
+  , mapGoodBirds = filter (collidesVary (cowBonus c)) (cropInsideScreen (mapGoodBirds m)) ++ 
    dropWhile isInsideScreen (mapGoodBirds m) 
+  , mapBonusItems = filter (not . collides c) (cropInsideScreen (mapBonusItems m)) ++ 
+   dropWhile isInsideScreen (mapBonusItems m) 
   }
+  where 
+      collidesVary (InvincibleBonus i) = (\_ -> True)
+      collidesVary _ = not . collides c
+     
 
+moveObstacles :: Map -> Float -> Map
+moveObstacles m count = m 
+    { mapClovers = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapClovers m) 
+    , mapGoodBirds = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapGoodBirds m)
+    , mapBadBirds = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapBadBirds m)
+    }
+    where
+      newPosition (x, y) count = (x + count, y)
 -- | Константы, параметры игры
 -- | Экран
 -- | Ширина экрана
@@ -711,19 +811,25 @@ screenBottom = - fromIntegral screenHeight / 2
 -- | Препятствия
 -- | Размер клевера
 defaultCloverSize :: Size
-defaultCloverSize = 1.1
+defaultCloverSize = 1.0
 
 -- | Размер плохой птички
 defaultBadBirdSize :: Size
-defaultBadBirdSize = 1.1
+defaultBadBirdSize = 1.0
 
 -- | Размер хорошей птички
 defaultGoodBirdSize :: Size
-defaultGoodBirdSize = 1.1
+defaultGoodBirdSize = 1.0
+
+defaultBonusItemSize :: Size
+defaultBonusItemSize = 1.0
 
 -- | Диапазон высот препятствий.
 obstacleHeightRange :: (Height, Height)
 obstacleHeightRange = (screenBottom, screenTop)
+
+typeRange :: (Int, Int)
+typeRange = (1, 2)
 
 -- | Расстояние между препятствиями
 defaultOffset :: Offset
@@ -754,6 +860,9 @@ originSpeedBadBird = 200
 originSpeedClover :: Speed
 originSpeedClover = 10
 
+originSpeedBonusItem :: Speed
+originSpeedBonusItem = 150
+
 -- | Величина ускорения игры
 speedIncrease :: Speed
 speedIncrease = 0.1
@@ -761,7 +870,7 @@ speedIncrease = 0.1
 -- | Корова
 -- | Размер коровы
 defaultCowSize :: Size
-defaultCowSize = 1.1
+defaultCowSize = 1.0
 
 -- | Мзменение высоты коровы при нажатии на клавиши (в пикселях)
 cowSpeed :: Float
