@@ -1,6 +1,7 @@
 module Main where
 
 import SuperCow
+import Interface
 
 {-# OPTIONS_GHC -Wall #-}
 
