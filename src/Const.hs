@@ -44,13 +44,16 @@ defaultGoodBirdSize = 1.0
 defaultBonusItemSize :: Size
 defaultBonusItemSize = 1.0
 
+defaultDonutSize :: Size
+defaultDonutSize = 1.0
+
 -- | Диапазон высот препятствий.
 obstacleHeightRange :: (Height, Height)
 obstacleHeightRange = (screenBottom, screenTop)
 
 typeRange :: (Int, Int)
-typeRange = (1, 3)
-
+typeRange = (1, 5)
+ 
 -- | Расстояние между препятствиями
 defaultOffset :: Offset
 defaultOffset = screenRight * 1.5
@@ -83,6 +86,9 @@ originSpeedClover = 10
 originSpeedBonusItem :: Speed
 originSpeedBonusItem = 150
 
+defaultDonutSpeed :: Speed
+defaultDonutSpeed = 1000
+
 -- | Величина ускорения игры
 speedIncrease :: Speed
 speedIncrease = 0.1
@@ -113,13 +119,6 @@ cowInitOffset = screenLeft + (fromIntegral screenWidth / 10)
 cowInitHeight :: Height
 cowInitHeight = 0
 
--- | Ширина картинки коровы
-cowPictureSizeWidth :: Cow -> Size
-cowPictureSizeWidth _ = 133
-
--- | Высота картинки коровы
-cowPictureSizeHeight :: Cow -> Size
-cowPictureSizeHeight _ = 68
 
 defaultCollapseTime :: Float
 defaultCollapseTime = 200

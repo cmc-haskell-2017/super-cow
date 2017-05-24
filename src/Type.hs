@@ -35,12 +35,13 @@ data BonusItem = BonusItem
   { bonusItemPosition :: Position
   , bonusItemSize     :: Size
   , bonusItemType     :: BonusType
+  , hidden            :: Bool
   }
 
 data Donut = Donut
   { donutPosition :: Position
   , donutSize     :: Size
-  }
+  } deriving Eq
 
 -- | Карта препятствий
 data Map = Map
@@ -95,7 +96,7 @@ data DonutGun = DonutGun
   , donutGuntime :: Float
   , timeBetweenDonuts :: Float
   , damage :: Float
-  }
+  } deriving Eq
 
 data Invincible = Invincible
   { invincibleTime :: Float
@@ -106,14 +107,17 @@ data Boss = Boss
   { bossHealth :: Float
   , bossDamage :: Float
   , bossHardness :: Float }
+ 
+data Mode = BossMode Boss | NightmareMode Float | OrdinaryMode Float 
+  | NoBonusMode Float
 
-data Mode = BossMode Boss | NightmareMode Float | OrdinaryMode Float
-
-data BonusType = Inv | SizeChange | BirdSpeed
+data BonusType = Inv | SizeChange | BirdSpeed | Gun
 
 data Bonus = InvincibleBonus Invincible
   | CowSizeChangeBonus CowSizeChange
   | BirdSpeedChangeBonus BirdSpeedChange
+  | DonutGunBonus DonutGun
+  | RandomBonus
   | NoBonus
   deriving Eq
 
@@ -234,3 +238,13 @@ instance Obstacle Donut where
   getWidth _ = 67
 
   getHeight _ = 36
+
+
+
+-- | Ширина картинки коровы
+cowPictureSizeWidth :: Cow -> Size
+cowPictureSizeWidth _ = 133
+
+-- | Высота картинки коровы
+cowPictureSizeHeight :: Cow -> Size
+cowPictureSizeHeight _ = 68

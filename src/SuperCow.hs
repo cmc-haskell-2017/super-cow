@@ -11,7 +11,7 @@ import Graphics.Gloss.Interface.Pure.Game
 runSuperCow :: Images -> IO ()
 runSuperCow images = do
   g <- newStdGen
-  play display bgColor fps (initUniverse g) (drawUniverse images)
+  play display bgColor fps (applyGameMode $ initUniverse g) (drawUniverse images)
     handleUniverse updateUniverse
   where
     display = InWindow "Super Cow" (screenWidth, screenHeight) (200, 200)
@@ -22,7 +22,7 @@ runSuperCow images = do
 -- | Инициализировать игровую вселенную, используя генератор случайных значений
 initUniverse :: StdGen -> Universe
 initUniverse g = Universe
-  { universeMap = moveObstacles (initMap g) 1000
+  { universeMap = moveObstacles (initMap g) 1500
   , universeCow = initCow
   , universeScore = 0
   , universeLife  = 5
@@ -93,10 +93,10 @@ initMap g = Map
       (randomRs obstacleOffsetRange g8)) (randomRs obstacleHeightRange g9)
     badBirdPositions = zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..]
       (randomRs obstacleOffsetRange g10)) (randomRs obstacleHeightRange g11)
-    bonusItemTypePositions = zip
+    bonusItemTypePositions = zipWith (\(x,y) z -> (x,y,z)) (zip
       (zip (zipWith (+) [screenLeft, screenLeft + defaultOffset..]
       (randomRs obstacleOffsetRange g12)) (randomRs obstacleHeightRange g13))
-      (map intToBonusType (randomRs typeRange g))
+      (map intToBonusType (randomRs typeRange g))) (randomRs (0, 5) g)
 
 -- | Инициализировать корову
 initCow :: Cow
@@ -111,6 +111,25 @@ initCow = Cow
   , cowBonus = InvincibleBonus Invincible { invincibleTime = 200, invincibleLife = 5 }
   }
 
+
+applyGameMode :: Universe -> Universe 
+applyGameMode u = case universeMode u of
+  (OrdinaryMode _) -> u
+  (NightmareMode _) -> u 
+    { universeMap = (universeMap u) 
+      { mapClovers = []
+      , mapBonusItems = [] 
+      }
+    }
+  (BossMode _) -> u 
+    { universeMap = (universeMap u) 
+      { mapGoodBirds = []
+      , mapBadBirds = [] 
+      }
+    }
+  (NoBonusMode _) -> u 
+    { universeMap = (universeMap u) { mapBonusItems = [] } }
+   
 -- | Взаимодействия c игровой вселенной
 -- | Обработчик событий игры
 handleUniverse :: Event -> Universe -> Universe
@@ -150,7 +169,7 @@ updateUniverse :: Float -> Universe -> Universe
 updateUniverse dt u
   | gameStopped == True = u
   | negativeLifeBalance u = toggleGame u
-  | otherwise = applyBonus (updateLife dt (u
+  | otherwise = applyBonus dt (updateLife dt (u
     { universeMap  = updateMap dt (universeMap u) (cowBonus (universeCow u))
     , universeCow = updateCow dt (universeCow u)
     , universeScore  = updateScore dt (universeScore u)
@@ -284,20 +303,20 @@ updateLife :: Float -> Universe -> Universe
 updateLife _ u
   | collisionMulti cow (mapClovers obstacleMap) = u
   { universeLife = checkLife life
-  , universeMap = collisionHandle obstacleMap cow
+  , universeMap = collisionHandle obstacleMap cow (cowBonus cow)
   }
   | collisionMulti cow (mapGoodBirds obstacleMap) = u
-    { universeLife = (life - 1)
-    , universeMap = collisionHandle obstacleMap cow
+    { universeLife = life - (tryChangeLife (cowBonus cow) 1)
+    , universeMap = collisionHandle obstacleMap cow (cowBonus cow)
     , universeCow = cow { cowBonus = tryAddInvincibleBonus (cowBonus cow) (life - 1) }
     }
   | collisionMulti cow (mapBadBirds obstacleMap) = u
-    { universeLife = (life - 2)
-    , universeMap = collisionHandle obstacleMap cow
+    { universeLife = (life - (tryChangeLife (cowBonus cow) 2))
+    , universeMap = collisionHandle obstacleMap cow (cowBonus cow)
     , universeCow = cow { cowBonus = tryAddInvincibleBonus (cowBonus cow) (life - 2) }
     }
   | collisionMulti cow (mapBonusItems obstacleMap) = u
-    { universeMap = collisionHandle obstacleMap cow
+    { universeMap = collisionHandle obstacleMap cow (cowBonus cow)
     , universeCow = cow { cowBonus = initBonus (bonusItemType (getCollisionObstacle cow (mapBonusItems obstacleMap))) u }
     }
   | otherwise = u
@@ -306,7 +325,9 @@ updateLife _ u
     cow = (universeCow u)
     obstacleMap = (universeMap u)
     checkLife 5 = 5
-    checkLife l = l + 1
+    checkLife l = l + (tryChangeLife (cowBonus cow) 1)
+    tryChangeLife (InvincibleBonus _) _ = 0
+    tryChangeLife _ n = n
 
 -- | Обновить скорость движения коровы
 updateSpeedCow :: (Cow -> Cow) -> Universe -> Universe
@@ -324,15 +345,15 @@ isInsideScreen o = pos o < screenRight && pos o > screenLeft
 
 -- | Столкновения
 -- | Сталкивается ли корова с любыми препятствиями
-collisionMulti :: Obstacle o => Cow -> [o] -> Bool
+collisionMulti :: (Obstacle o, Obstacle c) => c -> [o] -> Bool
 collisionMulti cow os = or (map (collides cow) (cropInsideScreen os))
 
 
-getCollisionObstacle :: Obstacle o => Cow -> [o] -> o
+getCollisionObstacle :: (Obstacle o, Obstacle c) => c -> [o] -> o
 getCollisionObstacle cow os = (filter (collides cow) (cropInsideScreen os)) !! 0
 
 -- | Сталкивается ли корова с препятствием?
-collides :: Obstacle o => Cow -> o -> Bool
+collides :: (Obstacle o, Obstacle c) => c -> o -> Bool
 collides cow o
   | crux >= oldx && cruy >= oldy && crdx >= oldx && crdy <= oldy &&
     clux <= oldx && cluy >= oldy = True
@@ -342,31 +363,32 @@ collides cow o
     clux <= olux && cluy >= oluy = True
   | otherwise = False
   where
-    (x1,y1) = cowPosition cow
+    (x1,y1) = getPosition cow
     (x2,y2) = getPosition o
-    s1 = currentCowSize (cowSize cow) (cowBonus cow)
+    s1 = getSize cow
     s2 = getSize o
-    (clux, cluy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 +
-      (cowPictureSizeHeight cow) / 2 * s1)
-    (cldx, cldy) = (x1 - (cowPictureSizeWidth cow) / 2 * s1, y1 -
-      (cowPictureSizeHeight cow) / 2 * s1)
-    (crux, cruy) = (x1 + (cowPictureSizeWidth cow) / 2 * s1, y1 +
-      (cowPictureSizeHeight cow) / 2 * s1)
-    (crdx, crdy) = (x1 + (cowPictureSizeWidth cow) / 2 * s1, y1 -
-      (cowPictureSizeHeight cow) / 2 * s1)
+    (clux, cluy) = (x1 - (getWidth cow) / 2 * s1, y1 +
+      (getHeight cow) / 2 * s1)
+    (cldx, cldy) = (x1 - (getWidth cow) / 2 * s1, y1 -
+      (getHeight cow) / 2 * s1)
+    (crux, cruy) = (x1 + (getWidth cow) / 2 * s1, y1 +
+      (getHeight cow) / 2 * s1)
+    (crdx, crdy) = (x1 + (getWidth cow) / 2 * s1, y1 -
+      (getHeight cow) / 2 * s1)
     (olux, oluy) = (x2 - (getWidth o) / 2 * s2, y2 + (getHeight o) / 2 * s2)
     (oldx, oldy) = (x2 - (getWidth o) / 2 * s2, y2 - (getHeight o) / 2 * s2)
     -- (orux, oruy) = (x2 + (getWidth o) / 2 * s2, y2 + (getHeight o) / 2 * s2)
     -- (ordx, ordy) = (x2 + (getWidth o) / 2 * s2, y2 - (getHeight o) / 2 * s2)
 
 -- |  Удаления обьекта, с которым столкнулись
-collisionHandle :: Map -> Cow -> Map
-collisionHandle m c = m
-  { mapClovers = filter (collidesVary (cowBonus c)) (cropInsideScreen (mapClovers m)) ++
+collisionHandle :: (Obstacle c) => Map -> c -> Bonus -> Map
+-- collisionHandle m c (InvincibleBonus i) = m
+collisionHandle m c b = m
+  { mapClovers = filter (collidesVary b) (cropInsideScreen (mapClovers m)) ++
    dropWhile isInsideScreen (mapClovers m)
-  , mapBadBirds = filter (collidesVary (cowBonus c)) (cropInsideScreen (mapBadBirds m)) ++
+  , mapBadBirds = filter (collidesVary b) (cropInsideScreen (mapBadBirds m)) ++
    dropWhile isInsideScreen (mapBadBirds m)
-  , mapGoodBirds = filter (collidesVary (cowBonus c)) (cropInsideScreen (mapGoodBirds m)) ++
+  , mapGoodBirds = filter (collidesVary b) (cropInsideScreen (mapGoodBirds m)) ++
    dropWhile isInsideScreen (mapGoodBirds m)
   , mapBonusItems = filter (not . collides c) (cropInsideScreen (mapBonusItems m)) ++
    dropWhile isInsideScreen (mapBonusItems m)
@@ -374,6 +396,16 @@ collisionHandle m c = m
   where
       collidesVary (InvincibleBonus _) = (\_ -> True)
       collidesVary _ = not . collides c
+  
+-- |  Удаления обьекта, с которым столкнулись
+badCollisionHandle :: (Obstacle c) => Map -> c -> Bonus -> Map
+badCollisionHandle m _ (InvincibleBonus _) = m
+badCollisionHandle m c _ = m
+  { mapBadBirds = filter (not . collides c) (cropInsideScreen (mapBadBirds m)) ++
+   dropWhile isInsideScreen (mapBadBirds m)
+  , mapGoodBirds = filter (not . collides c) (cropInsideScreen (mapGoodBirds m)) ++
+   dropWhile isInsideScreen (mapGoodBirds m)
+  }
 
 
 
@@ -382,6 +414,49 @@ moveObstacles m count = m
     { mapClovers = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapClovers m)
     , mapGoodBirds = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapGoodBirds m)
     , mapBadBirds = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapBadBirds m)
+    , mapBonusItems = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapBonusItems m)
     }
     where
       newPosition (x, y) cnt = (x + cnt, y)
+
+
+applyBonus :: Float -> Universe -> Universe
+applyBonus dt u = case cowBonus $ universeCow (updateDonuts dt u) of
+  InvincibleBonus i -> u { universeLife = invincibleLife i }
+  DonutGunBonus dg -> collideDonuts (allDonuts dg) (updateDonuts dt u)
+  -- { universeCow = updateDonuts dt (allDonuts $ cowBonus $ universeCow u)})
+  _ -> u
+
+
+removeCollidedDonuts :: Map -> Universe -> Universe
+removeCollidedDonuts m u = case cowBonus $ universeCow u of
+  DonutGunBonus dg -> u{ universeCow = (universeCow u) 
+    { cowBonus = DonutGunBonus (dg
+      { allDonuts = filter (\d -> 
+        not ((collisionMulti d badBirds) || (collisionMulti d goodBirds))) (allDonuts dg) 
+      })  
+    }}
+    where 
+      badBirds = mapBadBirds m
+      goodBirds = mapGoodBirds m
+  _ -> u
+    
+collideDonuts :: [Donut] -> Universe -> Universe
+collideDonuts [] u = u
+collideDonuts (d:ds) u = case cowBonus $ universeCow u of 
+  DonutGunBonus _ -> collideDonuts ds (u 
+      { universeMap = badCollisionHandle (universeMap u) d (cowBonus $ universeCow u)})
+  _ -> u
+
+updateDonuts :: Float -> Universe -> Universe
+updateDonuts dt u = u 
+  { universeCow = cow 
+    { cowBonus = case cowbonus of 
+      DonutGunBonus dg -> DonutGunBonus (dg { allDonuts = cropInsideScreen (updateDonutPositions 
+        dt (cowPosition cow) (allDonuts dg) (donutSpeed dg) (timeBetweenDonuts dg) (universeScore u)) })
+      _ -> NoBonus
+    } 
+  }
+  where 
+    cow = universeCow u
+    cowbonus = cowBonus cow
