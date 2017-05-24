@@ -207,6 +207,7 @@ toggleGame u
     { obstacleSpeedGoodBird = originSpeedGoodBird
     , obstacleSpeedBadBird = originSpeedBadBird
     , obstacleSpeedClover = originSpeedClover
+    , obstacleSpeedBonusItem = originSpeedBonusItem
     } 1000
     , universeCow = cow
     { cowPosition = (cowInitOffset, cowInitHeight)
