@@ -136,3 +136,9 @@ bossSpeed _ = 70
 
 bossTimer :: Int
 bossTimer = 1000
+
+bombSpeed :: Float
+bombSpeed = 200
+
+defaultBombSize :: Size
+defaultBombSize = 1.0

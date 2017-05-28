@@ -43,7 +43,7 @@ loadImages = do
     , imageRandomStar        = scale 0.1 0.1 randomStarPicture
     , imageEnlargeStar       = scale 0.1 0.1 enlargeStarPicture
     , imageBoss              = scale 0.4 0.4 bossMainPicture
-    , imageBomb              = scale 0.05 0.05 bombPicture 
+    , imageBomb              = scale 0.2 0.2 bombPicture 
     }
 
 
@@ -89,6 +89,8 @@ drawObstacles images obstacles = pictures
     (cropInsideScreen (mapClovers obstacles)))
   , pictures (map (\bi -> drawBonusItem images bi (bonusItemType bi))
     (cropInsideScreen (mapBonusItems obstacles)))
+  , pictures (map (draw (imageBomb images))
+    (cropInsideScreen (mapBombs obstacles)))
   ]
 
 -- | Нарисовать корову

@@ -54,6 +54,12 @@ initGoodBird position = GoodBird
   , goodBirdSize = defaultGoodBirdSize
   }
 
+initBomb :: Position -> Bomb
+initBomb position = Bomb
+  { bombPosition = position
+  , bombSize = defaultBombSize
+  }
+
 initBackgroundPicture :: Offset -> BackgroundPicture
 initBackgroundPicture offset = BackgroundPicture
   { backgroundPicturePosition = (offset, screenTop)
@@ -75,6 +81,7 @@ initMap g = Map
   , mapClovers = map initClover cloverPositions
   , mapBadBirds = map initBadBird badBirdPositions
   , mapBonusItems = map initBonusItem bonusItemTypePositions
+  , mapBombs = []
   , obstacleSpeedGoodBird = originSpeedGoodBird
   , obstacleSpeedBadBird = originSpeedBadBird
   , obstacleSpeedClover = originSpeedClover
@@ -159,14 +166,13 @@ updateUniverse dt u
   | gameStopped == True = u
   | negativeLifeBalance u = toggleGame u
   | otherwise = applyBonus (updateLife dt (u
-    { universeMap  = updateMap dt (universeMap u) (cowBonus (universeCow u)) activity
+    { universeMap  = updateMap dt (universeMap u) (cowBonus (universeCow u)) (universeBoss u)
     , universeCow = updateCow dt (universeCow u)
     , universeScore  = updateScore dt (universeScore u)
     , universeBackground = updateBackground dt (universeBackground u)
     , universeBoss = updateBoss dt u
     }))
   where
-    activity = bossActivity (universeBoss u)
     gameStopped = (universeStop u)
 
 
@@ -198,7 +204,8 @@ toggleGame u
     { obstacleSpeedGoodBird = originSpeedGoodBird
     , obstacleSpeedBadBird = originSpeedBadBird
     , obstacleSpeedClover = originSpeedClover
-    , obstacleSpeedBonusItem = originSpeedBonusItem 
+    , obstacleSpeedBonusItem = originSpeedBonusItem
+    , mapBombs = []
     } 1000
     , universeCow = cow
     { cowPosition = (cowInitOffset, cowInitHeight)
@@ -230,25 +237,32 @@ updateCow dt c = c
 
 
 -- | Обновить карту игровой вселенной
-updateMap :: Float -> Map -> Bonus -> Int -> Map
-updateMap dt obstacleMap bonus activity
+updateMap :: Float -> Map -> Bonus -> Boss -> Map
+updateMap dt obstacleMap bonus boss
   | activity == bossTimer = moveObstacles obstacleMap 1000
-  | activity > 0 = obstacleMap
+  | activity > 0 && mod activity 60 == 0 = obstacleMap
+    { mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed) ++ [(initBomb (bossPosition boss))]
+    }
+  | activity > 0 && mod activity 60 /= 0 = obstacleMap
+    { mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed)
+    }
   | otherwise = obstacleMap
-  { mapGoodBirds = updateObstacles dt (mapGoodBirds obstacleMap)
-    goodBirdSpeed
-  , mapBadBirds = updateObstacles dt (mapBadBirds obstacleMap)
-    badBirdSpeed
-  , mapClovers = updateObstacles dt (mapClovers obstacleMap)
-    cloverSpeed
-  , mapBonusItems = updateObstacles dt (mapBonusItems obstacleMap)
-    bonusSpeed
-  , obstacleSpeedGoodBird = obstacleSpeedGoodBird obstacleMap + speedIncrease
-  , obstacleSpeedBadBird = obstacleSpeedBadBird obstacleMap + speedIncrease
-  , obstacleSpeedClover = obstacleSpeedClover obstacleMap + speedIncrease
-  , obstacleSpeedBonusItem = obstacleSpeedBonusItem obstacleMap + speedIncrease
-  }
+    { mapGoodBirds = updateObstacles dt (mapGoodBirds obstacleMap)
+      goodBirdSpeed
+    , mapBadBirds = updateObstacles dt (mapBadBirds obstacleMap)
+      badBirdSpeed
+    , mapClovers = updateObstacles dt (mapClovers obstacleMap)
+      cloverSpeed
+    , mapBonusItems = updateObstacles dt (mapBonusItems obstacleMap)
+      bonusSpeed
+    , mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed)
+    , obstacleSpeedGoodBird = obstacleSpeedGoodBird obstacleMap + speedIncrease
+    , obstacleSpeedBadBird = obstacleSpeedBadBird obstacleMap + speedIncrease
+    , obstacleSpeedClover = obstacleSpeedClover obstacleMap + speedIncrease
+    , obstacleSpeedBonusItem = obstacleSpeedBonusItem obstacleMap + speedIncrease
+    }
   where
+    activity = bossActivity boss
     goodBirdSpeed = case bonus of
       BirdSpeedChangeBonus bsc -> (obstacleSpeedGoodBird obstacleMap) * (goodBirdSpeedMultiplier bsc)
       _ -> obstacleSpeedGoodBird obstacleMap
@@ -311,6 +325,11 @@ updateLife _ u
     { universeLife = (life - 2)
     , universeMap = collisionHandle obstacleMap cow
     , universeCow = cow { cowBonus = tryAddInvincibleBonus (cowBonus cow) (life - 2) }
+    }
+  | collisionMulti cow (mapBombs obstacleMap) = u
+    { universeLife = (life - 1)
+    , universeMap = collisionHandle obstacleMap cow
+    , universeCow = cow { cowBonus = tryAddInvincibleBonus (cowBonus cow) (life - 1) }
     }
   | collisionMulti cow (mapBonusItems obstacleMap) = u
     { universeMap = collisionHandle obstacleMap cow

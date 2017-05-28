@@ -42,12 +42,18 @@ data Donut = Donut
   , donutSize     :: Size
   }
 
+data Bomb = Bomb
+  { bombPosition :: Position
+  , bombSize     :: Size
+  }
+
 -- | Карта препятствий
 data Map = Map
   { mapGoodBirds  :: [GoodBird]
   , mapBadBirds   :: [BadBird]
   , mapClovers    :: [Clover]
-  , mapBonusItems      :: [BonusItem]
+  , mapBonusItems :: [BonusItem]
+  , mapBombs      :: [Bomb]
   , obstacleSpeedGoodBird :: Speed
   , obstacleSpeedBadBird :: Speed
   , obstacleSpeedClover :: Speed
@@ -237,3 +243,16 @@ instance Obstacle Donut where
   getWidth _ = 67
 
   getHeight _ = 36
+
+instance Obstacle Bomb where
+  getPosition = bombPosition
+
+  getSize = bombSize
+
+  setPosition bomb position = bomb { bombPosition = position }
+
+  setSize bomb size = bomb { bombSize = size }
+
+  getWidth _ = 60
+
+  getHeight _ = 60
