@@ -4,78 +4,90 @@ import Game.Obstacle
 import Type
 import Const
 import Game.Bonus
+
+-----------------------
+-- * Модель игрока
+-----------------------
+
 -- | Корова
 data Cow = Cow
-  { cowPosition  :: Position
-  , cowSize      :: Size
-  , cowSpeedUp   :: Speed  -- ^ Cкорость по вертикали
-  , cowSpeedLeft :: Speed  -- ^ Cкорость по горизонтали
-  , cowAngel     :: Float  -- ^ Угол наклона
-  , cowSpeedAngel :: Float
-  , cowPushed    :: Int
-  , cowBonus     :: Bonus
+  { cowPosition   :: Position -- ^ Положение в пространстве
+  , cowSize       :: Size     -- ^ Размеры
+  , cowSpeedUp    :: Speed    -- ^ Cкорость по вертикали
+  , cowSpeedLeft  :: Speed    -- ^ Cкорость по горизонтали
+  , cowAngel      :: Float    -- ^ Угол наклона
+  , cowSpeedAngel :: Float    -- ^ Изменение угла наклона
+  , cowPushed     :: Int      -- ^ 
+  , cowBonus      :: Bonus    -- ^ Бонус
   }
 
-
+-- | Корова, как препятствие
 instance Obstacle Cow where
-    getPosition = cowPosition
+    getPosition              = cowPosition
 
-    getSize cow = currentCowSize (cowSize cow) (cowBonus cow)
+    getSize cow              = currentCowSize (cowSize cow) (cowBonus cow)
 
     setPosition cow position = cow { cowPosition = position }
 
-    setSize cow size = cow { cowSize = size }
+    setSize cow size         = cow { cowSize = size }
 
-    getHeight = cowPictureSizeHeight
+    getHeight                = cowPictureSizeHeight
 
-    getWidth = cowPictureSizeWidth
-
+    getWidth                 = cowPictureSizeWidth
 
 -- | Инициализировать корову
 initCow :: Cow
 initCow = Cow
-  { cowPosition = (cowInitOffset, cowInitHeight)
-  , cowSize = defaultCowSize
-  , cowSpeedUp = 0
-  , cowSpeedLeft = 0
-  , cowAngel = 0
+  { cowPosition   = (cowInitOffset, cowInitHeight)
+  , cowSize       = defaultCowSize
+  , cowSpeedUp    = 0
+  , cowSpeedLeft  = 0
+  , cowAngel      = 0
   , cowSpeedAngel = 0
-  , cowPushed = 0
-  , cowBonus = InvincibleBonus Invincible { invincibleTime = 200, invincibleLife = 5 }
+  , cowPushed     = 0
+  , cowBonus      = InvincibleBonus Invincible 
+    { invincibleTime = 200
+    , invincibleLife = 5 
+    }
   }
   
-  
-  
-  -- | Обновление коровы
+-- | Обновление положения коровы
 updateCow :: Float -> Cow -> Cow
 updateCow dt c = c
-  { cowPosition = ((max screenLeft (min screenRight (coordX - dx)))
-  ,(max screenBottom (min screenTop (coordY - dy))))
-  , cowBonus = updateBonus dt (cowBonus c)
-  , cowAngel = max minAngle (min maxAngle (cowAngel c + da))
+  { cowPosition = ((max screenLeft (min screenRight (coordX - dx))), 
+    (max screenBottom (min screenTop (coordY - dy))))
+  , cowBonus    = updateBonus dt (cowBonus c)
+  , cowAngel    = max minAngle (min maxAngle (cowAngel c + da))
   }
   where
     coordX = fst (cowPosition c)
     coordY = snd (cowPosition c)
-    dx  = dt * (cowSpeedLeft c)
-    dy = dt * (cowSpeedUp c)
-    da = dt * (cowSpeedAngel c)
+    dx     = dt * (cowSpeedLeft c)
+    dy     = dt * (cowSpeedUp c)
+    da     = dt * (cowSpeedAngel c)
 
+-- | Текущий размер коровы, учитывая бонусы
 currentCowSize :: Size -> Bonus -> Size
 currentCowSize s (CowSizeChangeBonus csb) = s * (sizeMultiplier csb)
-currentCowSize s _ = s
+currentCowSize s _                        = s
 
 -- | Передвижение коровы вверх и вниз, если можно.
-goCowUpDown :: (Speed -> Speed) -> (Float -> Float) -> Int -> Cow -> Cow
-goCowUpDown f fAngel flagPushed cow = cow { cowSpeedUp = f $ cowSpeedUp cow
-                               , cowSpeedAngel = fAngel $ cowSpeedAngel cow
-                               , cowPushed = flagPushed
-                               }
+goCowUpDown :: (Speed -> Speed) -- ^ Функция, изменяющяя скорость коровы
+            -> (Float -> Float) -- ^ Функция, изменяющяя угол коровы
+            -> Int              -- ^ Флаг удара
+            -> Cow              -- ^ Корова
+            -> Cow
+goCowUpDown f fAngel flagPushed cow = cow 
+  { cowSpeedUp    = f $ cowSpeedUp 
+  , cowSpeedAngel = fAngel $ cowSpeedAngel cow
+  , cowPushed     = flagPushed
+  }
 
 -- | Передвижение коровы влево и вправо, если можно.
-goCowLeftRight :: (Speed -> Speed) -> Cow -> Cow
+goCowLeftRight :: (Speed -> Speed) -- ^ Функция, изменяющяя скорость коровы
+               -> Cow              -- ^ Корова
+               -> Cow
 goCowLeftRight f cow = cow { cowSpeedLeft = f $ cowSpeedLeft cow }
-
 
 -- | Ширина картинки коровы
 cowPictureSizeWidth :: Cow -> Size
@@ -85,21 +97,23 @@ cowPictureSizeWidth _ = 133
 cowPictureSizeHeight :: Cow -> Size
 cowPictureSizeHeight _ = 68
 
--- | Корова
 -- | Размер коровы
 defaultCowSize :: Size
 defaultCowSize = 1.0
 
--- | Мзменение высоты коровы при нажатии на клавиши (в пикселях)
+-- | Изменение высоты коровы при нажатии на клавиши (в пикселях)
 cowSpeed :: Float
 cowSpeed = 200
 
+-- | Изначальный угол наклона коровы
 cowAngelDefault :: Float
 cowAngelDefault = -100
 
+-- | Максимальный угол наклона положения коровы
 maxAngle :: Float
 maxAngle = 10
 
+-- | Минимальный угол наклона положения коровы
 minAngle :: Float
 minAngle = -10
 

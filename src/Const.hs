@@ -1,8 +1,11 @@
 module Const where
 
 import Type
- 
--- | Константы, параметры игры
+
+-----------------------------------------
+-- * Константы, общие параметры игры
+-----------------------------------------
+
 -- | Экран
 -- | Ширина экрана
 screenWidth :: Int
@@ -32,7 +35,8 @@ screenBottom = - fromIntegral screenHeight / 2
 backgroundSpeed:: Speed
 backgroundSpeed = 20
 
-backgroundPictureSizeWidth :: Float
+-- | Размер фона
+backgroundPictureSizeWidth :: Offset
 backgroundPictureSizeWidth = 5000
 
 -- | Скорость игры
