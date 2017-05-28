@@ -1,10 +1,13 @@
 module Interface where
 
-import Type
-import Bonus
-import Const
-import Graphics.Gloss.Juicy
 import Graphics.Gloss.Interface.Pure.Game
+import Graphics.Gloss.Juicy 
+import Game.Player
+import Game.Bonus
+import Game.Obstacle
+import Type
+import Const
+import Game.Universe
 
 -- | Загрузка изображений
 loadImages :: IO Images
@@ -43,7 +46,6 @@ loadImages = do
     , imageEnlargeStar       = scale 0.1 0.1 enlargeStarPicture
     }
 
-
 -- | Отрисовка игровой вселенной
 -- | Отобразить игровую вселенную
 drawUniverse :: Images -> Universe -> Picture
@@ -55,6 +57,19 @@ drawUniverse images universe = pictures
   , drawLife (universeLife universe)
   , drawGameOver (imageGameOver images) (universeGameOver universe)
   , drawDonuts images (cowBonus $ universeCow universe)
+  ]
+
+-- | Отобразить все препятствия игровой вселенной, вмещающихся в экран
+drawObstacles :: Images -> Map -> Picture
+drawObstacles images obstacles = pictures
+  [ pictures (map (draw (imageGoodBirdUp  images))
+    (cropInsideScreen (mapGoodBirds obstacles)))
+  , pictures (map (draw (imageBadBirdUp images))
+    (cropInsideScreen (mapBadBirds obstacles)))
+  , pictures (map (draw (imageClover images))
+    (cropInsideScreen (mapClovers obstacles)))
+  , pictures (map (\bi -> drawBonusItem images bi (bonusItemType bi))
+    (cropInsideScreen (mapBonusItems obstacles)))
   ]
 
 -- | Отобразить одну картинку фона
@@ -74,19 +89,6 @@ drawBackground image background = pictures (map
 --   where
 --     w = fromIntegral screenWidth  / 2
 --     h = fromIntegral screenHeight / 2
-
--- | Отобразить все препятствия игровой вселенной, вмещающихся в экран
-drawObstacles :: Images -> Map -> Picture
-drawObstacles images obstacles = pictures
-  [ pictures (map (draw (imageGoodBirdUp  images))
-    (cropInsideScreen (mapGoodBirds obstacles)))
-  , pictures (map (draw (imageBadBirdUp images))
-    (cropInsideScreen (mapBadBirds obstacles)))
-  , pictures (map (draw (imageClover images))
-    (cropInsideScreen (mapClovers obstacles)))
-  , pictures (map (\bi -> drawBonusItem images bi (bonusItemType bi))
-    (cropInsideScreen (mapBonusItems obstacles)))
-  ]
 
 -- | Нарисовать корову
 drawCow :: Images -> Cow -> Picture
@@ -135,13 +137,27 @@ drawGameOver image True = translate (-w) h (scale 1.0 1.0 image)
   where
     w = 0
     h = screenTop / 2
+    
+drawBonusItem :: Images -> BonusItem -> BonusType -> Picture
+drawBonusItem i bi _ 
+  | hidden bi = draw (imageRandomStar i) bi
+drawBonusItem i bi Inv = draw (imageInvincibleStar i) bi
+drawBonusItem i bi SizeChange = draw (imageEnlargeStar i) bi
+drawBonusItem i bi BirdSpeed = draw (imageFasterStar i) bi
+drawBonusItem i bi Gun = draw (imageDonutStar i) bi
 
--- | Оставить только те препятствия, которые входят в экран
-cropInsideScreen :: (Obstacle o) => [o] -> [o]
-cropInsideScreen obs = dropWhile (\o -> pos o < screenLeft) $
-  takeWhile (\o -> pos o < screenRight) obs
+
+drawDonuts :: Images -> Bonus -> Picture
+drawDonuts images (DonutGunBonus dgb) = 
+  pictures (map (draw (imageDonut images)) (allDonuts dgb))
+drawDonuts _ _ = blank
+
+-- | Нарисовать препятствие
+draw :: Obstacle o => Picture -> o -> Picture
+draw image o = translate x y (scale r r image)
   where
-    pos = fst . getPosition
+    (x, y) = getPosition o
+    r = getSize o
     
 -- | Оставить только те картинки фона, которые входят в экран
 cropBackgroundInsideScreen :: [BackgroundPicture] -> [BackgroundPicture]

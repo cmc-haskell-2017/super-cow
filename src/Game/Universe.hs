@@ -1,0 +1,82 @@
+module Game.Universe where
+
+import Game.Player
+import Game.Obstacle
+import Type
+import Game.Bonus
+
+-- | Игровая вселенная
+data Universe = Universe
+  { universeMap        :: Map    -- ^ Препятствия игровой вселенной
+  , universeCow        :: Cow    -- ^ Корова
+  , universeScore      :: Score  -- ^ Cчет
+  , universeLife       :: Life   -- ^ Жизни
+  , universeStop       :: Bool   -- ^ Флаг остановки игры
+  , universeGameOver   :: Bool   -- ^ Флаг окончания игры
+  , universeBackground :: Background
+  -- , universeCowBonus   :: Bonus
+  , universeMode       :: Mode
+  }
+  
+  
+removeCollidedDonuts :: Map -> Universe -> Universe
+removeCollidedDonuts m u = case cowBonus $ universeCow u of
+  DonutGunBonus dg -> u{ universeCow = (universeCow u) 
+    { cowBonus = DonutGunBonus (dg
+      { allDonuts = filter (\d -> 
+        not ((collisionMulti d badBirds) || (collisionMulti d goodBirds))) (allDonuts dg) 
+      })  
+    }}
+    where 
+      badBirds = mapBadBirds m
+      goodBirds = mapGoodBirds m
+  _ -> u
+    
+collideDonuts :: [Donut] -> Universe -> Universe
+collideDonuts [] u = u
+collideDonuts (d:ds) u = case cowBonus $ universeCow u of 
+  DonutGunBonus _ -> collideDonuts ds (u 
+      { universeMap = badCollisionHandle (universeMap u) d (cowBonus $ universeCow u)})
+  _ -> u
+
+updateDonuts :: Float -> Universe -> Universe
+updateDonuts dt u = u 
+  { universeCow = cow 
+    { cowBonus = case cowbonus of 
+      DonutGunBonus dg -> DonutGunBonus (dg { allDonuts = cropInsideScreen (updateDonutPositions 
+        dt (cowPosition cow) (allDonuts dg) (donutSpeed dg) (timeBetweenDonuts dg) (universeScore u)) })
+      _ -> NoBonus
+    } 
+  }
+  where 
+    cow = universeCow u
+    cowbonus = cowBonus cow  
+  
+-- | Обновить скорость движения коровы
+updateSpeedCow :: (Cow -> Cow) -> Universe -> Universe
+updateSpeedCow f u = u { universeCow = f $ universeCow u }
+
+applyBonus :: Float -> Universe -> Universe
+applyBonus dt u = case cowBonus $ universeCow (updateDonuts dt u) of
+  InvincibleBonus i -> u { universeLife = invincibleLife i }
+  DonutGunBonus dg -> collideDonuts (allDonuts dg) (updateDonuts dt u)
+  -- { universeCow = updateDonuts dt (allDonuts $ cowBonus $ universeCow u)})
+  _ -> u
+
+initBonus :: BonusType -> Universe -> Bonus
+initBonus Inv u = InvincibleBonus Invincible { invincibleTime = 200, invincibleLife = universeLife u }
+initBonus SizeChange _ = CowSizeChangeBonus CowSizeChange { sizeChangeTime = 200, sizeMultiplier = 1.5 }
+initBonus BirdSpeed _ = BirdSpeedChangeBonus BirdSpeedChange
+  { goodBirdSpeedMultiplier = 3
+  , badBirdSpeedMultiplier = 3
+  , cloverSpeedMultiplier = 3
+  , bonusSpeedMultiplier = 3
+  , birdSpeedChangetime = 200
+  }
+initBonus Gun _ = DonutGunBonus DonutGun
+  { donutSpeed = defaultDonutSpeed
+  , allDonuts = []
+  , donutGuntime = 1000
+  , timeBetweenDonuts = 50
+  , damage = 1
+  }

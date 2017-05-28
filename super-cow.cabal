@@ -18,7 +18,10 @@ library
   exposed-modules:     SuperCow
                      , Const
                      , Type
-                     , Bonus
+                     , Game.Bonus
+                     , Game.Obstacle
+                     , Game.Player
+                     , Game.Universe
                      , Interface
   build-depends:       base >= 4.7 && < 5
                      , gloss

@@ -28,40 +28,6 @@ screenTop = fromIntegral screenHeight / 2
 screenBottom :: Height
 screenBottom = - fromIntegral screenHeight / 2
 
--- | Препятствия
--- | Размер клевера
-defaultCloverSize :: Size
-defaultCloverSize = 1.0
-
--- | Размер плохой птички
-defaultBadBirdSize :: Size
-defaultBadBirdSize = 1.0
-
--- | Размер хорошей птички
-defaultGoodBirdSize :: Size
-defaultGoodBirdSize = 1.0
-
-defaultBonusItemSize :: Size
-defaultBonusItemSize = 1.0
-
-defaultDonutSize :: Size
-defaultDonutSize = 1.0
-
--- | Диапазон высот препятствий.
-obstacleHeightRange :: (Height, Height)
-obstacleHeightRange = (screenBottom, screenTop)
-
-typeRange :: (Int, Int)
-typeRange = (1, 5)
- 
--- | Расстояние между препятствиями
-defaultOffset :: Offset
-defaultOffset = screenRight * 1.5
-
--- | Диапазон, для вариации расстояния между препятсвтиями
-obstacleOffsetRange :: (Offset, Offset)
-obstacleOffsetRange = (-(defaultOffset / 2), defaultOffset / 2)
-
 -- | Скорость фона
 backgroundSpeed:: Speed
 backgroundSpeed = 20
@@ -74,51 +40,6 @@ backgroundPictureSizeWidth = 5000
 gameSpeed :: Speed
 gameSpeed = 100
 
-originSpeedGoodBird :: Speed
-originSpeedGoodBird = 100
-
-originSpeedBadBird :: Speed
-originSpeedBadBird = 200
-
-originSpeedClover :: Speed
-originSpeedClover = 10
-
-originSpeedBonusItem :: Speed
-originSpeedBonusItem = 150
-
-defaultDonutSpeed :: Speed
-defaultDonutSpeed = 1000
-
 -- | Величина ускорения игры
 speedIncrease :: Speed
 speedIncrease = 0.1
-
--- | Корова
--- | Размер коровы
-defaultCowSize :: Size
-defaultCowSize = 1.0
-
--- | Мзменение высоты коровы при нажатии на клавиши (в пикселях)
-cowSpeed :: Float
-cowSpeed = 200
-
-cowAngelDefault :: Float
-cowAngelDefault = -100
-
-maxAngle :: Float
-maxAngle = 10
-
-minAngle :: Float
-minAngle = -10
-
--- | Положение коровы по горизонтали
-cowInitOffset :: Offset
-cowInitOffset = screenLeft + (fromIntegral screenWidth / 10)
-
--- | Положение коровы по вертикали
-cowInitHeight :: Height
-cowInitHeight = 0
-
-
-defaultCollapseTime :: Float
-defaultCollapseTime = 200
