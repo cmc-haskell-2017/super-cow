@@ -30,6 +30,7 @@ initUniverse g = Universe
   , universeGameOver = False
   , universeBackground = initBackground
   , universeMode = OrdinaryMode 1
+  , universeBoss = initBoss
   }
 
 -- | Инициализировать клевер
@@ -109,6 +110,13 @@ initCow = Cow
   , cowSpeedAngel = 0
   , cowPushed = 0
   , cowBonus = InvincibleBonus Invincible { invincibleTime = 200, invincibleLife = 5 }
+  }
+
+-- | Инициализировать босса
+initBoss :: Boss
+initBoss = Boss
+  { bossPosition = (screenRight * 0.8, screenTop * 0.3)
+  , bossActivity = False
   }
 
 -- | Взаимодействия c игровой вселенной

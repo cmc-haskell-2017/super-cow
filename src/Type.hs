@@ -102,12 +102,7 @@ data Invincible = Invincible
   , invincibleLife :: Life
   } deriving Eq
 
-data Boss = Boss
-  { bossHealth :: Float
-  , bossDamage :: Float
-  , bossHardness :: Float }
-
-data Mode = BossMode Boss | NightmareMode Float | OrdinaryMode Float
+data Mode = NightmareMode Float | OrdinaryMode Float
 
 data BonusType = Inv | SizeChange | BirdSpeed
 
@@ -116,6 +111,11 @@ data Bonus = InvincibleBonus Invincible
   | BirdSpeedChangeBonus BirdSpeedChange
   | NoBonus
   deriving Eq
+
+data Boss = Boss
+  { bossPosition :: Position
+  , bossActivity :: Bool
+  }
 
 -- | Игровая вселенная
 data Universe = Universe
@@ -128,6 +128,7 @@ data Universe = Universe
   , universeBackground :: Background
   -- , universeCowBonus   :: Bonus
   , universeMode       :: Mode
+  , universeBoss       :: Boss   -- ^ Босс
   }
 
 -- | Изображения объектов
@@ -147,6 +148,7 @@ data Images = Images
   , imageInvincibleStar  :: Picture
   , imageRandomStar      :: Picture
   , imageEnlargeStar     :: Picture
+  , imageBoss            :: Picture
   }
 
 

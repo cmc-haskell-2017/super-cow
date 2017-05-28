@@ -123,3 +123,13 @@ cowPictureSizeHeight _ = 68
 
 defaultCollapseTime :: Float
 defaultCollapseTime = 200
+
+-- | Конфигурация босса
+bossPictureWidth :: Boss -> Size
+bossPictureWidth _ = 170
+
+bossPictureHeight :: Boss -> Size
+bossPictureHeight _ = 170
+
+bossSpeed :: Boss -> Float
+bossSpeed _ = 200

@@ -23,6 +23,7 @@ loadImages = do
   Just invincibleStarPicture   <- loadJuicyPNG "images/InvincibleStar.png"
   Just randomStarPicture       <- loadJuicyPNG "images/RandomStar.png"
   Just enlargeStarPicture      <- loadJuicyPNG "images/EnlargeStar.png"
+  Just bossMainPicture         <- loadJuicyPNG "images/Boss.png"
 
   return Images
     { imageCow               = scale 1.0 1.0 cowPicture
@@ -40,6 +41,7 @@ loadImages = do
     , imageInvincibleStar    = scale 0.1 0.1 invincibleStarPicture
     , imageRandomStar        = scale 0.1 0.1 randomStarPicture
     , imageEnlargeStar       = scale 0.1 0.1 enlargeStarPicture
+    , imageBoss              = scale 0.4 0.4 bossMainPicture
     }
 
 
@@ -53,6 +55,7 @@ drawUniverse images universe = pictures
   , drawScore (universeScore universe)
   , drawLife (universeLife universe)
   , drawGameOver (imageGameOver images) (universeGameOver universe)
+  , drawBoss (imageBoss images) (bossActivity (universeBoss universe)) (universeBoss universe)
   ]
 
 -- | Отобразить одну картинку фона
@@ -145,6 +148,13 @@ drawGameOver image True = translate (-w) h (scale 1.0 1.0 image)
   where
     w = 0
     h = screenTop / 2
+
+
+drawBoss :: Picture -> Bool -> Boss -> Picture
+drawBoss _ False _ = blank
+drawBoss image True boss = translate x y image
+  where
+    (x, y) = bossPosition boss
 
 
 -- | Оставить только те препятствия, которые входят в экран
