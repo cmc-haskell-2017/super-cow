@@ -132,4 +132,7 @@ bossPictureHeight :: Boss -> Size
 bossPictureHeight _ = 170
 
 bossSpeed :: Boss -> Float
-bossSpeed _ = 200
+bossSpeed _ = 70
+
+bossTimer :: Int
+bossTimer = 1000

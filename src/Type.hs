@@ -114,7 +114,7 @@ data Bonus = InvincibleBonus Invincible
 
 data Boss = Boss
   { bossPosition :: Position
-  , bossActivity :: Bool
+  , bossActivity :: Int
   }
 
 -- | Игровая вселенная
@@ -149,6 +149,7 @@ data Images = Images
   , imageRandomStar      :: Picture
   , imageEnlargeStar     :: Picture
   , imageBoss            :: Picture
+  , imageBomb            :: Picture
   }
 
 

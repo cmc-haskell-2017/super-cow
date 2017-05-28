@@ -24,6 +24,7 @@ loadImages = do
   Just randomStarPicture       <- loadJuicyPNG "images/RandomStar.png"
   Just enlargeStarPicture      <- loadJuicyPNG "images/EnlargeStar.png"
   Just bossMainPicture         <- loadJuicyPNG "images/Boss.png"
+  Just bombPicture             <- loadJuicyPNG "images/bomb.png"
 
   return Images
     { imageCow               = scale 1.0 1.0 cowPicture
@@ -42,6 +43,7 @@ loadImages = do
     , imageRandomStar        = scale 0.1 0.1 randomStarPicture
     , imageEnlargeStar       = scale 0.1 0.1 enlargeStarPicture
     , imageBoss              = scale 0.4 0.4 bossMainPicture
+    , imageBomb              = scale 0.05 0.05 bombPicture 
     }
 
 
@@ -150,9 +152,10 @@ drawGameOver image True = translate (-w) h (scale 1.0 1.0 image)
     h = screenTop / 2
 
 
-drawBoss :: Picture -> Bool -> Boss -> Picture
-drawBoss _ False _ = blank
-drawBoss image True boss = translate x y image
+drawBoss :: Picture -> Int -> Boss -> Picture
+drawBoss image activity boss
+  | activity > 0 = translate x y image
+  | otherwise = blank
   where
     (x, y) = bossPosition boss
 

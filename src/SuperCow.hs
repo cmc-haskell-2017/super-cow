@@ -116,7 +116,7 @@ initCow = Cow
 initBoss :: Boss
 initBoss = Boss
   { bossPosition = (screenRight * 0.8, screenTop * 0.3)
-  , bossActivity = False
+  , bossActivity = -bossTimer
   }
 
 -- | Взаимодействия c игровой вселенной
@@ -159,12 +159,14 @@ updateUniverse dt u
   | gameStopped == True = u
   | negativeLifeBalance u = toggleGame u
   | otherwise = applyBonus (updateLife dt (u
-    { universeMap  = updateMap dt (universeMap u) (cowBonus (universeCow u))
+    { universeMap  = updateMap dt (universeMap u) (cowBonus (universeCow u)) activity
     , universeCow = updateCow dt (universeCow u)
     , universeScore  = updateScore dt (universeScore u)
     , universeBackground = updateBackground dt (universeBackground u)
+    , universeBoss = updateBoss dt u
     }))
   where
+    activity = bossActivity (universeBoss u)
     gameStopped = (universeStop u)
 
 
@@ -196,16 +198,19 @@ toggleGame u
     { obstacleSpeedGoodBird = originSpeedGoodBird
     , obstacleSpeedBadBird = originSpeedBadBird
     , obstacleSpeedClover = originSpeedClover
+    , obstacleSpeedBonusItem = originSpeedBonusItem 
     } 1000
     , universeCow = cow
     { cowPosition = (cowInitOffset, cowInitHeight)
     , cowBonus = InvincibleBonus Invincible { invincibleLife = 5, invincibleTime = defaultCollapseTime }
     }
+    , universeBoss = boss { bossActivity = -bossTimer }
     }
   where
     stopFlag = (universeStop u)
     m = (universeMap u)
     cow = (universeCow u)
+    boss = universeBoss u
     gameOverFlag = (universeGameOver u)
 
 -- | Обновление коровы
@@ -225,8 +230,11 @@ updateCow dt c = c
 
 
 -- | Обновить карту игровой вселенной
-updateMap :: Float -> Map -> Bonus -> Map
-updateMap dt obstacleMap bonus = obstacleMap
+updateMap :: Float -> Map -> Bonus -> Int -> Map
+updateMap dt obstacleMap bonus activity
+  | activity == bossTimer = moveObstacles obstacleMap 1000
+  | activity > 0 = obstacleMap
+  | otherwise = obstacleMap
   { mapGoodBirds = updateObstacles dt (mapGoodBirds obstacleMap)
     goodBirdSpeed
   , mapBadBirds = updateObstacles dt (mapBadBirds obstacleMap)
@@ -316,6 +324,33 @@ updateLife _ u
     checkLife 5 = 5
     checkLife l = l + 1
 
+
+updateBoss :: Float -> Universe -> Boss
+updateBoss dt u
+  | activity > 1 = boss
+    { bossPosition = (bossX, bossY + dy)
+    , bossActivity = activity - 1
+    }
+  | activity < -1 = boss { bossActivity = activity + 1 }
+  | activity == 1 = boss { bossActivity = -bossTimer }
+  | activity == -1 = boss { bossActivity = bossTimer }
+  | otherwise = boss
+  where
+    boss = universeBoss u
+    cow = universeCow u
+    activity = bossActivity boss
+    bossX = fst (bossPosition boss)
+    bossY = snd (bossPosition boss) 
+    cowY = snd (cowPosition cow)
+    dy = dt * (bossSpeed boss) * (getBossDirection bossY cowY)
+
+getBossDirection :: Float -> Float -> Float
+getBossDirection bossLine cowLine
+  | bossLine > cowLine = -1
+  | bossLine < cowLine = 1
+  | otherwise = 0
+
+
 -- | Обновить скорость движения коровы
 updateSpeedCow :: (Cow -> Cow) -> Universe -> Universe
 updateSpeedCow f u = u { universeCow = f $ universeCow u }
@@ -390,6 +425,7 @@ moveObstacles m count = m
     { mapClovers = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapClovers m)
     , mapGoodBirds = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapGoodBirds m)
     , mapBadBirds = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapBadBirds m)
+    , mapBonusItems = map (\o -> setPosition o (newPosition (getPosition o) count)) (mapBonusItems m)
     }
     where
       newPosition (x, y) cnt = (x + cnt, y)
