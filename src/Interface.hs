@@ -25,6 +25,7 @@ loadImages = do
   Just enlargeStarPicture      <- loadJuicyPNG "images/EnlargeStar.png"
   Just bossMainPicture         <- loadJuicyPNG "images/Boss.png"
   Just bombPicture             <- loadJuicyPNG "images/bomb.png"
+  Just bossTitlePicture        <- loadJuicyPNG "images/bossTitle.png"
 
   return Images
     { imageCow               = scale 1.0 1.0 cowPicture
@@ -43,7 +44,8 @@ loadImages = do
     , imageRandomStar        = scale 0.1 0.1 randomStarPicture
     , imageEnlargeStar       = scale 0.1 0.1 enlargeStarPicture
     , imageBoss              = scale 0.4 0.4 bossMainPicture
-    , imageBomb              = scale 0.2 0.2 bombPicture 
+    , imageBomb              = scale 0.2 0.2 bombPicture
+    , imageBossTitle         = scale 0.7 0.5 bossTitlePicture
     }
 
 
@@ -58,6 +60,7 @@ drawUniverse images universe = pictures
   , drawLife (universeLife universe)
   , drawGameOver (imageGameOver images) (universeGameOver universe)
   , drawBoss (imageBoss images) (bossActivity (universeBoss universe)) (universeBoss universe)
+  , drawBossTitle (imageBossTitle images) (bossActivity (universeBoss universe))
   ]
 
 -- | Отобразить одну картинку фона
@@ -160,6 +163,12 @@ drawBoss image activity boss
   | otherwise = blank
   where
     (x, y) = bossPosition boss
+
+
+drawBossTitle :: Picture -> Int -> Picture
+drawBossTitle image activity
+  | activity > -bossTitleTimer && activity < 0 || activity > bossTimer - bossTitleTimer = translate 0 (screenTop * 0.8) image
+  | otherwise = blank
 
 
 -- | Оставить только те препятствия, которые входят в экран

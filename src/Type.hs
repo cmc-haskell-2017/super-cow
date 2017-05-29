@@ -156,6 +156,7 @@ data Images = Images
   , imageEnlargeStar     :: Picture
   , imageBoss            :: Picture
   , imageBomb            :: Picture
+  , imageBossTitle       :: Picture
   }
 
 

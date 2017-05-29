@@ -142,3 +142,9 @@ bombSpeed = 200
 
 defaultBombSize :: Size
 defaultBombSize = 1.0
+
+bombTimer :: Int
+bombTimer = 60
+
+bossTitleTimer :: Int
+bossTitleTimer = 50

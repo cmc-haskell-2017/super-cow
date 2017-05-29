@@ -240,10 +240,10 @@ updateCow dt c = c
 updateMap :: Float -> Map -> Bonus -> Boss -> Map
 updateMap dt obstacleMap bonus boss
   | activity == bossTimer = moveObstacles obstacleMap 1000
-  | activity > 0 && mod activity 60 == 0 = obstacleMap
+  | activity > 0 && mod activity bombTimer == 0 = obstacleMap
     { mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed) ++ [(initBomb (bossPosition boss))]
     }
-  | activity > 0 && mod activity 60 /= 0 = obstacleMap
+  | activity > 0 && mod activity bombTimer /= 0 = obstacleMap
     { mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed)
     }
   | otherwise = obstacleMap
