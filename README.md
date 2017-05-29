@@ -37,3 +37,11 @@ stack ghci
 по нажатию пробела.
 
 ![Игра «Super Cow»](images/game-preview.gif)
+
+## Докучентация
+
+Открыть ее можно, используя команду
+
+```
+open doc/index.html
+```

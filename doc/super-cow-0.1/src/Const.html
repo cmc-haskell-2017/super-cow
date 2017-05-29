@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | &#1054;&#1089;&#1085;&#1086;&#1074;&#1085;&#1099;&#1077; &#1082;&#1086;&#1085;&#1089;&#1090;&#1072;&#1085;&#1090;&#1099;</span><span>
+</span><a name="line-2"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Const</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-3"></a><span>
+</span><a name="line-4"></a><span class="hs-keyword">import</span><span> </span><a href="Type.html"><span class="hs-identifier">Type</span></a><span>
+</span><a name="line-5"></a><span>
+</span><a name="line-6"></a><span class="hs-comment">-----------------------------------------</span><span>
+</span><a name="line-7"></a><span class="hs-comment">-- * &#1050;&#1086;&#1085;&#1089;&#1090;&#1072;&#1085;&#1090;&#1099;, &#1086;&#1073;&#1097;&#1080;&#1077; &#1087;&#1072;&#1088;&#1072;&#1084;&#1077;&#1090;&#1088;&#1099; &#1080;&#1075;&#1088;&#1099;</span><span>
+</span><a name="line-8"></a><span class="hs-comment">-----------------------------------------</span><span>
+</span><a name="line-9"></a><span>
+</span><a name="line-10"></a><span class="hs-comment">-- | &#1069;&#1082;&#1088;&#1072;&#1085;</span><span>
+</span><a name="line-11"></a><span class="hs-comment">-- | &#1064;&#1080;&#1088;&#1080;&#1085;&#1072; &#1101;&#1082;&#1088;&#1072;&#1085;&#1072;</span><span>
+</span><a name="line-12"></a><span class="hs-identifier">screenWidth</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Int</span><span>
+</span><a name="line-13"></a><a name="screenWidth"><a href="Const.html#screenWidth"><span class="hs-identifier">screenWidth</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">800</span><span>
+</span><a name="line-14"></a><span> </span><span>
+</span><a name="line-15"></a><span class="hs-comment">-- | &#1042;&#1099;&#1089;&#1086;&#1090;&#1072; &#1101;&#1082;&#1088;&#1072;&#1085;&#1072;</span><span>
+</span><a name="line-16"></a><span class="hs-identifier">screenHeight</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Int</span><span>
+</span><a name="line-17"></a><a name="screenHeight"><a href="Const.html#screenHeight"><span class="hs-identifier">screenHeight</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">450</span><span>
+</span><a name="line-18"></a><span>
+</span><a name="line-19"></a><span class="hs-comment">-- | &#1055;&#1086;&#1083;&#1086;&#1078;&#1077;&#1085;&#1080;&#1077; &#1087;&#1088;&#1072;&#1074;&#1086;&#1075;&#1086; &#1082;&#1088;&#1072;&#1103; &#1101;&#1082;&#1088;&#1072;&#1085;&#1072;</span><span>
+</span><a name="line-20"></a><span class="hs-identifier">screenRight</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Type.html#Offset"><span class="hs-identifier hs-type">Offset</span></a><span>
+</span><a name="line-21"></a><a name="screenRight"><a href="Const.html#screenRight"><span class="hs-identifier">screenRight</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">fromIntegral</span><span> </span><a href="Const.html#screenWidth"><span class="hs-identifier hs-var">screenWidth</span></a><span> </span><span class="hs-operator hs-var">/</span><span> </span><span class="hs-number">2</span><span>
+</span><a name="line-22"></a><span> </span><span>
+</span><a name="line-23"></a><span class="hs-comment">-- | &#1055;&#1086;&#1083;&#1086;&#1078;&#1077;&#1085;&#1080;&#1077; &#1083;&#1077;&#1074;&#1086;&#1075;&#1086; &#1082;&#1088;&#1072;&#1103; &#1101;&#1082;&#1088;&#1072;&#1085;&#1072;</span><span>
+</span><a name="line-24"></a><span class="hs-identifier">screenLeft</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Type.html#Offset"><span class="hs-identifier hs-type">Offset</span></a><span>
+</span><a name="line-25"></a><a name="screenLeft"><a href="Const.html#screenLeft"><span class="hs-identifier">screenLeft</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">-</span><span> </span><span class="hs-identifier hs-var">fromIntegral</span><span> </span><a href="Const.html#screenWidth"><span class="hs-identifier hs-var">screenWidth</span></a><span> </span><span class="hs-operator hs-var">/</span><span> </span><span class="hs-number">2</span><span>
+</span><a name="line-26"></a><span>
+</span><a name="line-27"></a><span class="hs-comment">-- | &#1055;&#1086;&#1083;&#1086;&#1078;&#1077;&#1085;&#1080;&#1077; &#1074;&#1077;&#1088;&#1093;&#1085;&#1077;&#1075;&#1086; &#1082;&#1088;&#1072;&#1103; &#1101;&#1082;&#1088;&#1072;&#1085;&#1072;</span><span>
+</span><a name="line-28"></a><span class="hs-identifier">screenTop</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Type.html#Height"><span class="hs-identifier hs-type">Height</span></a><span>
+</span><a name="line-29"></a><a name="screenTop"><a href="Const.html#screenTop"><span class="hs-identifier">screenTop</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">fromIntegral</span><span> </span><a href="Const.html#screenHeight"><span class="hs-identifier hs-var">screenHeight</span></a><span> </span><span class="hs-operator hs-var">/</span><span> </span><span class="hs-number">2</span><span>
+</span><a name="line-30"></a><span>
+</span><a name="line-31"></a><span class="hs-comment">-- | &#1055;&#1086;&#1083;&#1086;&#1078;&#1077;&#1085;&#1080;&#1077; &#1085;&#1080;&#1078;&#1085;&#1077;&#1075;&#1086; &#1082;&#1088;&#1072;&#1103; &#1101;&#1082;&#1088;&#1072;&#1085;&#1072;</span><span>
+</span><a name="line-32"></a><span class="hs-identifier">screenBottom</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Type.html#Height"><span class="hs-identifier hs-type">Height</span></a><span>
+</span><a name="line-33"></a><a name="screenBottom"><a href="Const.html#screenBottom"><span class="hs-identifier">screenBottom</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">-</span><span> </span><span class="hs-identifier hs-var">fromIntegral</span><span> </span><a href="Const.html#screenHeight"><span class="hs-identifier hs-var">screenHeight</span></a><span> </span><span class="hs-operator hs-var">/</span><span> </span><span class="hs-number">2</span><span>
+</span><a name="line-34"></a><span>
+</span><a name="line-35"></a><span class="hs-comment">-- | &#1057;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; &#1092;&#1086;&#1085;&#1072;</span><span>
+</span><a name="line-36"></a><span class="hs-identifier">backgroundSpeed</span><span class="hs-glyph">::</span><span> </span><a href="Type.html#Speed"><span class="hs-identifier hs-type">Speed</span></a><span>
+</span><a name="line-37"></a><a name="backgroundSpeed"><a href="Const.html#backgroundSpeed"><span class="hs-identifier">backgroundSpeed</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">20</span><span>
+</span><a name="line-38"></a><span>
+</span><a name="line-39"></a><span class="hs-comment">-- | &#1056;&#1072;&#1079;&#1084;&#1077;&#1088; &#1092;&#1086;&#1085;&#1072;</span><span>
+</span><a name="line-40"></a><span class="hs-identifier">backgroundPictureSizeWidth</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Type.html#Offset"><span class="hs-identifier hs-type">Offset</span></a><span>
+</span><a name="line-41"></a><a name="backgroundPictureSizeWidth"><a href="Const.html#backgroundPictureSizeWidth"><span class="hs-identifier">backgroundPictureSizeWidth</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">5000</span><span>
+</span><a name="line-42"></a><span>
+</span><a name="line-43"></a><span class="hs-comment">-- | &#1048;&#1079;&#1085;&#1072;&#1095;&#1072;&#1083;&#1100;&#1085;&#1072;&#1103; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; &#1076;&#1074;&#1080;&#1078;&#1077;&#1085;&#1080;&#1103; &#1080;&#1075;&#1088;&#1086;&#1082;&#1072; &#1087;&#1086; &#1074;&#1089;&#1077;&#1083;&#1077;&#1085;&#1085;&#1086;&#1081; - &#1072;&#1073;&#1089;&#1086;&#1083;&#1102;&#1090;&#1085;&#1086;&#1077; &#1080;&#1079;&#1084;&#1077;&#1085;&#1077;&#1085;&#1080;&#1077;</span><span>
+</span><a name="line-44"></a><span class="hs-identifier">gameSpeed</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Type.html#Speed"><span class="hs-identifier hs-type">Speed</span></a><span>
+</span><a name="line-45"></a><a name="gameSpeed"><a href="Const.html#gameSpeed"><span class="hs-identifier">gameSpeed</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">100</span><span>
+</span><a name="line-46"></a><span>
+</span><a name="line-47"></a><span class="hs-comment">-- | &#1042;&#1077;&#1083;&#1080;&#1095;&#1080;&#1085;&#1072; &#1091;&#1089;&#1082;&#1086;&#1088;&#1077;&#1085;&#1080;&#1103; &#1080;&#1075;&#1088;&#1099;</span><span>
+</span><a name="line-48"></a><span class="hs-identifier">speedIncrease</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Type.html#Speed"><span class="hs-identifier hs-type">Speed</span></a><span>
+</span><a name="line-49"></a><a name="speedIncrease"><a href="Const.html#speedIncrease"><span class="hs-identifier">speedIncrease</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">0.1</span><span>
+</span><a name="line-50"></a></pre></body></html>
