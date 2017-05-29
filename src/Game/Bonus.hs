@@ -1,3 +1,4 @@
+-- | Бонус
 module Game.Bonus where
 
 import Type

@@ -1,3 +1,4 @@
+-- | Основные типы данных
 module Type where
 
 import Graphics.Gloss.Interface.Pure.Game

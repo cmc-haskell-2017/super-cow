@@ -1,3 +1,4 @@
+-- | Основные константы
 module Const where
 
 import Type

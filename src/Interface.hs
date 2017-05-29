@@ -1,3 +1,4 @@
+-- | Интерфейс игры
 module Interface where
 
 import Graphics.Gloss.Interface.Pure.Game

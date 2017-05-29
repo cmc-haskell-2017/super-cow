@@ -1,3 +1,4 @@
+-- | Препятствие
 module Game.Obstacle where
 
 import Game.Bonus
@@ -42,12 +43,17 @@ data GoodBird = GoodBird
 
 -- | Реализация класса типов - препятствие
 class Obstacle o where
-  getPosition :: o -> Position
-  getSize     :: o -> Size
-  setPosition :: o -> Position -> o
-  setSize     :: o -> Size -> o
-  getHeight   :: o -> Size
-  getWidth    :: o -> Size
+  getPosition :: o -> Position       -- ^ Получить позицию
+  
+  getSize     :: o -> Size           -- ^ Получить размер
+  
+  setPosition :: o -> Position -> o  -- ^ Изменить позицию
+  
+  setSize     :: o -> Size -> o      -- ^ Изменить размер
+  
+  getHeight   :: o -> Size           -- ^ Получить длинну
+  
+  getWidth    :: o -> Size           -- ^ Поулчить ширину
 
 -- | Препятствие - клевер
 instance Obstacle Clover where

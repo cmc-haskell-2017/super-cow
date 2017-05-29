@@ -1,3 +1,4 @@
+-- | Игровая вселенная
 module Game.Universe where
 
 import Game.Player

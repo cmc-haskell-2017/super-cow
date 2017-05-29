@@ -1,3 +1,4 @@
+-- | Игрок
 module Game.Player where
 
 import Game.Obstacle

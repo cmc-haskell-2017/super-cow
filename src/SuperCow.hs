@@ -1,3 +1,4 @@
+-- | Основной игровой модуль
 module SuperCow where
 
 import Interface
