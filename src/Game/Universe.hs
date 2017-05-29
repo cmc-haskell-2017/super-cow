@@ -25,18 +25,18 @@ data Universe = Universe
 removeCollidedDonuts :: Map -> Universe -> Universe
 removeCollidedDonuts m u = case cowBonus $ universeCow u of
   DonutGunBonus dg -> u
-  { universeCow = (universeCow u) 
-    { cowBonus   = DonutGunBonus (dg
-      { allDonuts = filter (\d -> 
-        not ((collisionMulti d badBirds) || (collisionMulti d goodBirds))) 
-        (allDonuts dg) 
-      })  
+    { universeCow = (universeCow u) 
+      { cowBonus   = DonutGunBonus (dg
+        { allDonuts = filter (\d -> 
+          not ((collisionMulti d badBirds) || (collisionMulti d goodBirds))) 
+          (allDonuts dg) 
+        })  
+      }
     }
-  }
+  _                -> u
   where 
     badBirds  = mapBadBirds m
     goodBirds = mapGoodBirds m
-  _                -> u
 
 -- | Проверить пончики на столкновения с другими обьектами
 collideDonuts :: [Donut] -> Universe -> Universe
@@ -75,8 +75,8 @@ updateSpeedCow f u = u
 applyBonus :: Float -> Universe -> Universe
 applyBonus dt u = case cowBonus $ universeCow (updateDonuts dt u) of
   InvincibleBonus i -> u 
-  { universeLife = invincibleLife i 
-  }
+    { universeLife = invincibleLife i 
+    }
   DonutGunBonus dg  -> collideDonuts (allDonuts dg) (updateDonuts dt u)
   _                 -> u
 

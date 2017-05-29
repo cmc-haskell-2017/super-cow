@@ -78,7 +78,7 @@ goCowUpDown :: (Speed -> Speed) -- ^ Функция, изменяющяя ско
             -> Cow              -- ^ Корова
             -> Cow
 goCowUpDown f fAngel flagPushed cow = cow 
-  { cowSpeedUp    = f $ cowSpeedUp 
+  { cowSpeedUp    = f $ cowSpeedUp cow
   , cowSpeedAngel = fAngel $ cowSpeedAngel cow
   , cowPushed     = flagPushed
   }

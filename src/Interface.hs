@@ -93,9 +93,6 @@ drawCow :: Images -> Cow -> Picture
 drawCow images cow = case cowBonus cow of
   BirdSpeedChangeBonus _ -> translate x y 
     (rotate (cowAngel cow) (scale r r (imageCow images)))
-  where
-    (x, y) = cowPosition cow 
-    r = cowSize cow
   InvincibleBonus _      -> drawCowWithBonus images cow (cowBonus cow)
   CowSizeChangeBonus _   -> drawCowWithBonus images cow (cowBonus cow)
   _                      -> translate x y 

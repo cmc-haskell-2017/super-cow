@@ -39,7 +39,6 @@ backgroundSpeed = 20
 backgroundPictureSizeWidth :: Offset
 backgroundPictureSizeWidth = 5000
 
--- | Скорость игры
 -- | Изначальная скорость движения игрока по вселенной - абсолютное изменение
 gameSpeed :: Speed
 gameSpeed = 100
