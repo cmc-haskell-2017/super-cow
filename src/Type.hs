@@ -253,6 +253,6 @@ instance Obstacle Bomb where
 
   setSize bomb size = bomb { bombSize = size }
 
-  getWidth _ = 60
+  getWidth _ = 40
 
-  getHeight _ = 60
+  getHeight _ = 40
