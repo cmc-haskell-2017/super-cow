@@ -47,6 +47,11 @@ data Bomb = Bomb
   , bombSize     :: Size
   }
 
+data Stone = Stone
+  { stonePosition :: Position
+  , stoneSize     :: Size
+  }
+
 -- | Карта препятствий
 data Map = Map
   { mapGoodBirds  :: [GoodBird]
@@ -54,6 +59,7 @@ data Map = Map
   , mapClovers    :: [Clover]
   , mapBonusItems :: [BonusItem]
   , mapBombs      :: [Bomb]
+  , mapStones     :: [Stone]
   , obstacleSpeedGoodBird :: Speed
   , obstacleSpeedBadBird :: Speed
   , obstacleSpeedClover :: Speed
@@ -157,6 +163,7 @@ data Images = Images
   , imageBoss            :: Picture
   , imageBomb            :: Picture
   , imageBossTitle       :: Picture
+  , imageStone           :: Picture
   }
 
 
@@ -257,3 +264,16 @@ instance Obstacle Bomb where
   getWidth _ = 40
 
   getHeight _ = 40
+
+instance Obstacle Stone where
+  getPosition = stonePosition
+
+  getSize = stoneSize
+
+  setPosition stone position = stone { stonePosition = position }
+
+  setSize stone size = stone { stoneSize = size }
+
+  getWidth _ = 120
+
+  getHeight _ = 80

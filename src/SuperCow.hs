@@ -60,6 +60,12 @@ initBomb position = Bomb
   , bombSize = defaultBombSize
   }
 
+initStone :: Position -> Stone
+initStone position = Stone
+  { stonePosition = position
+  , stoneSize = defaultStoneSize
+  }
+
 initBackgroundPicture :: Offset -> BackgroundPicture
 initBackgroundPicture offset = BackgroundPicture
   { backgroundPicturePosition = (offset, screenTop)
@@ -82,6 +88,7 @@ initMap g = Map
   , mapBadBirds = map initBadBird badBirdPositions
   , mapBonusItems = map initBonusItem bonusItemTypePositions
   , mapBombs = []
+  , mapStones = []
   , obstacleSpeedGoodBird = originSpeedGoodBird
   , obstacleSpeedBadBird = originSpeedBadBird
   , obstacleSpeedClover = originSpeedClover
@@ -206,6 +213,7 @@ toggleGame u
     , obstacleSpeedClover = originSpeedClover
     , obstacleSpeedBonusItem = originSpeedBonusItem
     , mapBombs = []
+    , mapStones = []
     } 1000
     , universeCow = cow
     { cowPosition = (cowInitOffset, cowInitHeight)
@@ -240,11 +248,17 @@ updateCow dt c = c
 updateMap :: Float -> Map -> Bonus -> Boss -> Map
 updateMap dt obstacleMap bonus boss
   | activity == bossTimer = moveObstacles obstacleMap 1000
+  | activity == stoneAppearenceTime = obstacleMap
+    { mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed)
+    , mapStones = [(initStone (bossPosition boss))]
+    }
   | activity > 0 && mod activity bombTimer == 0 = obstacleMap
     { mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed) ++ [(initBomb (bossPosition boss))]
+    , mapStones = (updateObstacles dt (mapStones obstacleMap) stoneSpeed)
     }
   | activity > 0 && mod activity bombTimer /= 0 = obstacleMap
     { mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed)
+    , mapStones = (updateObstacles dt (mapStones obstacleMap) stoneSpeed)
     }
   | otherwise = obstacleMap
     { mapGoodBirds = updateObstacles dt (mapGoodBirds obstacleMap)
@@ -256,6 +270,7 @@ updateMap dt obstacleMap bonus boss
     , mapBonusItems = updateObstacles dt (mapBonusItems obstacleMap)
       bonusSpeed
     , mapBombs = (updateObstacles dt (mapBombs obstacleMap) bombSpeed)
+    , mapStones = (updateObstacles dt (mapStones obstacleMap) stoneSpeed)
     , obstacleSpeedGoodBird = obstacleSpeedGoodBird obstacleMap + speedIncrease
     , obstacleSpeedBadBird = obstacleSpeedBadBird obstacleMap + speedIncrease
     , obstacleSpeedClover = obstacleSpeedClover obstacleMap + speedIncrease
@@ -330,6 +345,10 @@ updateLife _ u
     { universeLife = (life - 1)
     , universeMap = collisionHandle obstacleMap cow
     , universeCow = cow { cowBonus = tryAddInvincibleBonus (cowBonus cow) (life - 1) }
+    }
+  | collisionMulti cow (mapStones obstacleMap) = u
+    { universeLife = 0
+    , universeMap = collisionHandle obstacleMap cow
     }
   | collisionMulti cow (mapBonusItems obstacleMap) = u
     { universeMap = collisionHandle obstacleMap cow

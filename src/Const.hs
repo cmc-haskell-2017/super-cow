@@ -148,3 +148,12 @@ bombTimer = 60
 
 bossTitleTimer :: Int
 bossTitleTimer = 50
+
+defaultStoneSize :: Size
+defaultStoneSize = 1.0
+
+stoneSpeed :: Float
+stoneSpeed = 120
+
+stoneAppearenceTime :: Int
+stoneAppearenceTime = 600

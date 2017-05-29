@@ -26,6 +26,7 @@ loadImages = do
   Just bossMainPicture         <- loadJuicyPNG "images/Boss.png"
   Just bombPicture             <- loadJuicyPNG "images/bomb.png"
   Just bossTitlePicture        <- loadJuicyPNG "images/bossTitle.png"
+  Just stonePicture            <- loadJuicyPNG "images/stone.png"
 
   return Images
     { imageCow               = scale 1.0 1.0 cowPicture
@@ -46,6 +47,7 @@ loadImages = do
     , imageBoss              = scale 0.4 0.4 bossMainPicture
     , imageBomb              = scale 0.2 0.2 bombPicture
     , imageBossTitle         = scale 0.7 0.5 bossTitlePicture
+    , imageStone             = scale 0.05 0.05 stonePicture
     }
 
 
@@ -94,6 +96,8 @@ drawObstacles images obstacles = pictures
     (cropInsideScreen (mapBonusItems obstacles)))
   , pictures (map (draw (imageBomb images))
     (cropInsideScreen (mapBombs obstacles)))
+  , pictures (map (draw (imageStone images))
+    (cropInsideScreen (mapStones obstacles)))
   ]
 
 -- | Нарисовать корову
